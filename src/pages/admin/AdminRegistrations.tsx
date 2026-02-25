@@ -61,7 +61,7 @@ export default function AdminRegistrations() {
       case "PARTIAL_PAID":
         return (
           <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs font-semibold">
-            Nyicil
+            Angsuran
           </span>
         );
       case "CANCELLED":
@@ -179,7 +179,7 @@ export default function AdminRegistrations() {
           >
             <option value="ALL">Semua Status</option>
             <option value="PENDING">Belum Bayar</option>
-            <option value="PARTIAL_PAID">Nyicil</option>
+            <option value="PARTIAL_PAID">Angsuran</option>
             <option value="FULLY_PAID">Lunas</option>
             <option value="CANCELLED">Batal</option>
           </select>

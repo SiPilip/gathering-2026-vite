@@ -213,7 +213,7 @@ export default function AdminDashboard() {
                         {reg.status === "FULLY_PAID"
                           ? "Lunas"
                           : reg.status === "PARTIAL_PAID"
-                            ? "Nyicil"
+                            ? "Angsuran"
                             : reg.status === "PENDING"
                               ? "Belum Bayar"
                               : "Batal"}

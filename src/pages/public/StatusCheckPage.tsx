@@ -109,7 +109,7 @@ export default function StatusCheckPage() {
       case "PARTIAL_PAID":
         return (
           <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-medium">
-            <AlertCircle className="w-4 h-4" /> Nyicil
+            <AlertCircle className="w-4 h-4" /> Angsuran
           </span>
         );
       case "CANCELLED":
