@@ -32,6 +32,19 @@ export default function LandingPage() {
       (p) => (p - 1 + CAROUSEL_IMAGES.length) % CAROUSEL_IMAGES.length,
     );
 
+  function DaftarSekarangComp() {
+    return (
+      <div className="pt-0 pb-4">
+        <Link
+          to="/register"
+          className="inline-flex items-center justify-center gap-3 bg-blue-600 text-white px-10 py-5 rounded-full text-xl font-bold hover:bg-blue-500 transition-all shadow-xl hover:shadow-blue-500/25 hover:-translate-y-1"
+        >
+          Daftar Sekarang <ArrowRight className="h-6 w-6" />
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] text-center space-y-12 pb-12">
       <div className="space-y-6 mt-8">
@@ -54,6 +67,8 @@ export default function LandingPage() {
           dalam retreat gereja kita di tahun 2026.
         </p>
       </div>
+
+      <DaftarSekarangComp />
 
       {/* Image Carousel Spotlight */}
       <div className="relative w-full max-w-5xl h-[400px] md:h-[500px] rounded-3xl overflow-hidden shadow-2xl group">
@@ -177,14 +192,7 @@ export default function LandingPage() {
         </div>
       </div>
 
-      <div className="pt-8 pb-16">
-        <Link
-          to="/register"
-          className="inline-flex items-center justify-center gap-3 bg-blue-600 text-white px-10 py-5 rounded-full text-xl font-bold hover:bg-blue-500 transition-all shadow-xl hover:shadow-blue-500/25 hover:-translate-y-1"
-        >
-          Daftar Sekarang <ArrowRight className="h-6 w-6" />
-        </Link>
-      </div>
+      <DaftarSekarangComp />
     </div>
   );
 }
