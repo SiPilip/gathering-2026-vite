@@ -9,10 +9,10 @@ import {
 } from "lucide-react";
 
 const CAROUSEL_IMAGES = [
-  "/img/1.jpg",
-  "/img/2.jpg",
-  "/img/3.jpg",
-  "/img/4.jpg",
+  "/img/1.jpeg",
+  "/img/2.jpeg",
+  "/img/3.jpeg",
+  "/img/4.jpeg",
 ];
 
 export default function LandingPage() {
