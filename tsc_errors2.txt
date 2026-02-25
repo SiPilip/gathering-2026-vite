@@ -1,0 +1,17 @@
+src/App.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/layouts/AdminLayout.tsx(1,8): error TS6133: 'React' is declared but its value is never read.
+src/layouts/PublicLayout.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/lib/utils.ts(10,23): error TS2345: Argument of type '(string | false | null | undefined)[]' is not assignable to parameter of type 'string | false | null | undefined'.
+src/pages/admin/AdminDashboard.tsx(1,8): error TS6133: 'React' is declared but its value is never read.
+src/pages/admin/AdminNewRegistration.tsx(2,1): error TS6133: 'RegistrationPage' is declared but its value is never read.
+src/pages/admin/AdminNewRegistration.tsx(13,10): error TS6133: 'Users' is declared but its value is never read.
+src/pages/admin/AdminNewRegistration.tsx(13,17): error TS6133: 'User' is declared but its value is never read.
+src/pages/admin/AdminNewRegistration.tsx(13,23): error TS6133: 'UserPlus' is declared but its value is never read.
+src/pages/admin/AdminRegistrations.tsx(1,8): error TS6133: 'React' is declared but its value is never read.
+src/pages/public/LandingPage.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/pages/public/RegistrationSuccess.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/pages/public/RegistrationSuccess.tsx(3,30): error TS6133: 'ArrowRight' is declared but its value is never read.
+src/pages/public/StatusCheckPage.tsx(13,1): error TS6133: 'cn' is declared but its value is never read.
+src/pages/public/StatusCheckPage.tsx(17,9): error TS6133: 'navigate' is declared but its value is never read.
+src/pages/public/StatusCheckPage.tsx(176,55): error TS6133: 'idx' is declared but its value is never read.
+src/routes.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
