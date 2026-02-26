@@ -126,9 +126,9 @@ export default function AdminNewRegistration() {
           </div>
         )}
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
           <h2 className="text-sm font-semibold text-slate-900 mb-4 uppercase tracking-wider">
-            Tipe Paket & Harga
+            Tipe Paket &amp; Harga
           </h2>
           <div className="grid grid-cols-2 gap-4">
             <button
@@ -165,7 +165,7 @@ export default function AdminNewRegistration() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
           <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
             Data Utama
           </h2>
@@ -183,7 +183,7 @@ export default function AdminNewRegistration() {
                 className="w-full rounded-lg border-slate-300 border px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
             </div>
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   No WhatsApp
@@ -198,7 +198,7 @@ export default function AdminNewRegistration() {
               </div>
 
               {type === "INDIVIDUAL" && (
-                <div className="w-1/3">
+                <div className="w-full sm:w-1/3">
                   <label className="block text-sm font-medium text-slate-700 mb-1">
                     Umur
                   </label>
@@ -218,7 +218,7 @@ export default function AdminNewRegistration() {
         </div>
 
         {type === "FAMILY" && (
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
                 Anggota Keluarga
@@ -268,7 +268,7 @@ export default function AdminNewRegistration() {
           </div>
         )}
 
-        <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-2xl shadow-sm">
+        <div className="bg-indigo-50 border border-indigo-100 p-4 sm:p-6 rounded-2xl shadow-sm">
           <h2 className="text-sm font-semibold text-indigo-900 mb-4 uppercase tracking-wider">
             Pembayaran Titipan Awal (Opsional)
           </h2>

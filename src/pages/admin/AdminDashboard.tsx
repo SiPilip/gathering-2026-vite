@@ -81,8 +81,8 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
               <Users className="h-6 w-6" />
@@ -101,7 +101,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
               <TrendingUp className="h-6 w-6" />
@@ -117,7 +117,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-green-50 text-green-600 rounded-xl">
               <Wallet className="h-6 w-6" />
@@ -133,7 +133,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-red-50 text-red-600 rounded-xl">
               <CreditCard className="h-6 w-6" />
@@ -150,9 +150,9 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Recent Registrations Table */}
+      {/* Recent Registrations */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 flex justify-between items-center">
           <h2 className="font-semibold text-slate-800">Pendaftar Terbaru</h2>
           <Link
             to="/admin/registrations"
@@ -161,7 +161,54 @@ export default function AdminDashboard() {
             Lihat Semua &rarr;
           </Link>
         </div>
-        <div className="overflow-x-auto">
+
+        {/* Mobile Card View */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {stats.recentRegistrations.length === 0 ? (
+            <p className="px-4 py-8 text-center text-slate-500 text-sm">
+              Belum ada data pendaftar terbaru.
+            </p>
+          ) : (
+            stats.recentRegistrations.map((reg) => (
+              <div
+                key={reg.id}
+                className="px-4 py-3 flex items-center justify-between gap-3"
+              >
+                <div className="min-w-0">
+                  <p className="font-medium text-slate-900 text-sm truncate">
+                    {reg.representative_name}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {reg.type === "FAMILY" ? "Keluarga" : "Individu"} &bull;{" "}
+                    {new Date(reg.created_at).toLocaleDateString("id-ID", {
+                      day: "numeric",
+                      month: "short",
+                    })}
+                  </p>
+                </div>
+                <span
+                  className={`shrink-0 inline-flex px-2 py-1 rounded-full text-xs font-semibold
+                    ${reg.status === "FULLY_PAID" ? "bg-green-100 text-green-700" : ""}
+                    ${reg.status === "PARTIAL_PAID" ? "bg-yellow-100 text-yellow-700" : ""}
+                    ${reg.status === "PENDING" ? "bg-slate-100 text-slate-700" : ""}
+                    ${reg.status === "CANCELLED" ? "bg-red-100 text-red-700" : ""}
+                  `}
+                >
+                  {reg.status === "FULLY_PAID"
+                    ? "Lunas"
+                    : reg.status === "PARTIAL_PAID"
+                      ? "Angsuran"
+                      : reg.status === "PENDING"
+                        ? "Belum Bayar"
+                        : "Batal"}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
               <tr>

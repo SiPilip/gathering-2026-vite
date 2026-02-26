@@ -122,68 +122,79 @@ export default function AdminPayments() {
   const formatCur = (num: number) => "Rp " + num.toLocaleString("id-ID");
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center gap-4">
+    <div className="max-w-4xl mx-auto space-y-5 sm:space-y-6">
+      <div className="flex items-center gap-3">
         <button
           onClick={() => navigate(-1)}
-          className="p-2 hover:bg-slate-200 rounded-full text-slate-600 transition-colors"
+          className="p-2 hover:bg-slate-200 rounded-full text-slate-600 transition-colors shrink-0"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-2xl font-bold text-slate-800">
-          Detail & Pembayaran
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-800">
+          Detail &amp; Pembayaran
         </h1>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Detail Info */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-6">
+        <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-5">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 border-b pb-2 mb-4">
+            <h2 className="text-base sm:text-lg font-semibold text-slate-900 border-b pb-2 mb-4">
               Informasi Pendaftar
             </h2>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-500">ID Registrasi</span>
-                <span className="font-mono text-slate-900 font-medium">
-                  {data.id.split("-")[0]}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Nama Lengkap</span>
-                <span className="font-medium text-slate-900">
-                  {data.representative_name}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">No. WhatsApp</span>
-                <span className="font-medium text-slate-900">
-                  {data.phone_number}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Sumber Input</span>
-                <span
-                  className={`font-semibold ${data.registration_source === "ADMIN" ? "text-indigo-600" : "text-slate-700"}`}
+            <div className="space-y-2.5 text-sm">
+              {[
+                {
+                  label: "ID Registrasi",
+                  value: (
+                    <span className="font-mono font-medium">
+                      {data.id.split("-")[0]}
+                    </span>
+                  ),
+                },
+                { label: "Nama Lengkap", value: data.representative_name },
+                { label: "No. WhatsApp", value: data.phone_number },
+                {
+                  label: "Sumber Input",
+                  value: (
+                    <span
+                      className={`font-semibold ${data.registration_source === "ADMIN" ? "text-indigo-600" : "text-slate-700"}`}
+                    >
+                      {data.registration_source === "ADMIN"
+                        ? "Entry Admin / TU"
+                        : "Pendaftaran Mandiri"}
+                    </span>
+                  ),
+                },
+                {
+                  label: "Status",
+                  value: (
+                    <span
+                      className={`font-bold uppercase ${
+                        data.status === "FULLY_PAID"
+                          ? "text-green-600"
+                          : data.status === "PARTIAL_PAID"
+                            ? "text-yellow-600"
+                            : data.status === "PENDING"
+                              ? "text-slate-600"
+                              : "text-red-600"
+                      }`}
+                    >
+                      {data.status.replace("_", " ")}
+                    </span>
+                  ),
+                },
+              ].map(({ label, value }) => (
+                <div
+                  key={label}
+                  className="flex items-start justify-between gap-3"
                 >
-                  {data.registration_source === "ADMIN"
-                    ? "Entry Admin / TU"
-                    : "Pendaftaran Mandiri"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Status</span>
-                <span
-                  className={`font-bold uppercase
-                     ${data.status === "FULLY_PAID" ? "text-green-600" : ""}
-                     ${data.status === "PARTIAL_PAID" ? "text-yellow-600" : ""}
-                     ${data.status === "PENDING" ? "text-slate-600" : ""}
-                     ${data.status === "CANCELLED" ? "text-red-600" : ""}
-                  `}
-                >
-                  {data.status.replace("_", " ")}
-                </span>
-              </div>
+                  <span className="text-slate-500 shrink-0">{label}</span>
+                  <span className="font-medium text-slate-900 text-right min-w-0 break-all">
+                    {value}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -230,8 +241,8 @@ export default function AdminPayments() {
         </div>
 
         {/* Pembayaran */}
-        <div className="space-y-6">
-          <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-md">
+        <div className="space-y-5">
+          <div className="bg-slate-900 text-white rounded-2xl p-4 sm:p-6 shadow-md">
             <h2 className="text-lg font-semibold mb-4 border-b border-slate-700 pb-2">
               Rangkuman Tagihan
             </h2>
