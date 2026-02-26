@@ -104,12 +104,12 @@ export default function RegistrationPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">
-          Form Formulir Pendaftaran
+    <div className="max-w-2xl mx-auto px-0">
+      <div className="mb-6 sm:mb-8 text-center">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
+          Form Pendaftaran
         </h1>
-        <p className="text-slate-600">
+        <p className="text-slate-600 text-sm sm:text-base">
           Isi data di bawah ini untuk mendaftar Gathering GMI Wesley.
         </p>
       </div>
@@ -122,7 +122,7 @@ export default function RegistrationPage() {
         )}
 
         {/* 1. Tipe Pendaftaran */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
           <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
             <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs">
               1
@@ -183,7 +183,7 @@ export default function RegistrationPage() {
         </div>
 
         {/* 2. Data Pendaftar */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
           <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
             <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs">
               2
@@ -210,7 +210,7 @@ export default function RegistrationPage() {
               />
             </div>
 
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   No. WhatsApp{" "}
@@ -227,7 +227,7 @@ export default function RegistrationPage() {
               </div>
 
               {type === "INDIVIDUAL" && (
-                <div className="w-1/3">
+                <div className="w-full sm:w-1/3">
                   <label className="block text-sm font-medium text-slate-700 mb-1">
                     Kategori Umur
                   </label>
@@ -248,7 +248,7 @@ export default function RegistrationPage() {
 
         {/* 3. Anggota Keluarga */}
         {type === "FAMILY" && (
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs">
@@ -331,7 +331,7 @@ export default function RegistrationPage() {
         )}
 
         {/* Rangkuman */}
-        <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-lg flex items-center justify-between">
+        <div className="bg-slate-900 text-white p-5 sm:p-6 rounded-2xl shadow-lg flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between">
           <div>
             <div className="text-slate-400 text-sm mb-1">
               Total Biaya Pendaftaran
@@ -347,7 +347,7 @@ export default function RegistrationPage() {
           <button
             type="submit"
             disabled={loading}
-            className="bg-blue-500 hover:bg-blue-400 text-white px-6 py-3 rounded-xl font-semibold inline-flex items-center gap-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto bg-blue-500 hover:bg-blue-400 text-white px-6 py-3 rounded-xl font-semibold inline-flex items-center justify-center gap-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {loading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
