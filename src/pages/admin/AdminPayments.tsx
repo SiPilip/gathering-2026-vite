@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
-import { ArrowLeft, Loader2, DollarSign, Save } from "lucide-react";
+import { ArrowLeft, Loader2, DollarSign, Save, Trash2 } from "lucide-react";
 
 export default function AdminPayments() {
   const { id } = useParams();
@@ -104,6 +104,63 @@ export default function AdminPayments() {
       fetchDetails();
     } catch (error) {
       alert("Gagal membatalkan.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeletePayment = async (
+    paymentId: string,
+    paymentAmount: number,
+  ) => {
+    if (
+      !confirm(
+        `Hapus transaksi sebesar ${formatCur(paymentAmount)}? Jumlah ini akan dikurangi dari total pembayaran.`,
+      )
+    )
+      return;
+
+    try {
+      setSubmitting(true);
+
+      // 1. Delete the payment record
+      const { error: delError } = await supabase
+        .from("payments")
+        .delete()
+        .eq("id", paymentId);
+      if (delError) throw delError;
+
+      // 2. Recalculate total_paid from remaining payments
+      const { data: remainingPayments, error: fetchError } = await supabase
+        .from("payments")
+        .select("amount")
+        .eq("registration_id", id);
+      if (fetchError) throw fetchError;
+
+      const newTotalPaid = (remainingPayments || []).reduce(
+        (sum, p) => sum + Number(p.amount),
+        0,
+      );
+
+      // 3. Determine new status
+      let newStatus = "PENDING";
+      if (newTotalPaid > 0) {
+        newStatus =
+          newTotalPaid >= Number(data.total_fee)
+            ? "FULLY_PAID"
+            : "PARTIAL_PAID";
+      }
+
+      // 4. Update registration
+      const { error: updateError } = await supabase
+        .from("registrations")
+        .update({ total_paid: newTotalPaid, status: newStatus })
+        .eq("id", id);
+      if (updateError) throw updateError;
+
+      fetchDetails(); // refresh
+    } catch (err: any) {
+      alert("Gagal menghapus transaksi: " + err.message);
     } finally {
       setSubmitting(false);
     }
@@ -311,32 +368,59 @@ export default function AdminPayments() {
           )}
 
           {/* History List */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-            <h3 className="text-base font-semibold text-slate-900 mb-4">
-              Histori Transaksi
-            </h3>
+          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-semibold text-slate-900">
+                Histori Transaksi
+              </h3>
+              <span className="text-xs text-slate-400">
+                {payments.length} transaksi
+              </span>
+            </div>
             {payments.length === 0 ? (
               <p className="text-sm text-slate-500 text-center py-4 bg-slate-50 rounded-lg">
                 Belum ada pembayaran.
               </p>
             ) : (
-              <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+              <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
                 {payments.map((p) => (
                   <div
                     key={p.id}
-                    className="flex justify-between items-center p-3 border border-slate-100 rounded-lg hover:bg-slate-50"
+                    className="flex items-center justify-between gap-3 p-3 border border-slate-100 rounded-lg hover:bg-slate-50 transition-colors"
                   >
-                    <div>
+                    {/* Info */}
+                    <div className="min-w-0">
                       <div className="font-semibold text-slate-800">
                         {formatCur(p.amount)}
                       </div>
-                      <div className="text-xs text-slate-400">
-                        {new Date(p.payment_date).toLocaleString("id-ID")}
+                      <div className="text-xs text-slate-400 mt-0.5">
+                        {new Date(p.payment_date).toLocaleString("id-ID", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </div>
                     </div>
-                    <span className="text-xs font-semibold bg-green-100 text-green-700 px-2 py-1 rounded">
-                      Lunas
-                    </span>
+
+                    {/* Right side: badge + delete */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs font-semibold bg-green-100 text-green-700 px-2 py-1 rounded-full whitespace-nowrap">
+                        Diterima
+                      </span>
+                      {data.status !== "CANCELLED" && (
+                        <button
+                          type="button"
+                          disabled={submitting}
+                          onClick={() => handleDeletePayment(p.id, p.amount)}
+                          title="Hapus transaksi ini"
+                          className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-40"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

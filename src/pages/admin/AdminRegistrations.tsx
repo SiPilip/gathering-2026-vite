@@ -30,7 +30,7 @@ export default function AdminRegistrations() {
           id, type, representative_name, phone_number,
           total_fee, total_paid, status, created_at,
           registration_source, age_category,
-          family_members (count)
+          family_members (member_name)
         `,
         )
         .order("created_at", { ascending: false });
@@ -45,10 +45,22 @@ export default function AdminRegistrations() {
   };
 
   const filteredData = registrations.filter((reg) => {
-    const matchSearch =
-      reg.representative_name.toLowerCase().includes(search.toLowerCase()) ||
-      reg.phone_number.includes(search) ||
-      reg.id.includes(search);
+    const q = search.toLowerCase().trim();
+    if (!q) return statusFilter === "ALL" ? true : reg.status === statusFilter;
+
+    const matchRep =
+      reg.representative_name.toLowerCase().includes(q) ||
+      reg.phone_number.includes(q) ||
+      reg.id.includes(q);
+
+    // Also search through family member names
+    const matchMember =
+      reg.type === "FAMILY" &&
+      (reg.family_members as { member_name: string }[])?.some((m) =>
+        m.member_name.toLowerCase().includes(q),
+      );
+
+    const matchSearch = matchRep || matchMember;
     const matchStatus =
       statusFilter === "ALL" ? true : reg.status === statusFilter;
     return matchSearch && matchStatus;
@@ -112,7 +124,7 @@ export default function AdminRegistrations() {
             ? "Pemuda"
             : "Anak"
         : "-",
-      r.type === "FAMILY" ? r.family_members[0]?.count || 0 : 1,
+      r.type === "FAMILY" ? r.family_members?.length || 0 : 1,
       r.total_fee,
       r.total_paid,
       r.status,
@@ -177,7 +189,7 @@ export default function AdminRegistrations() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Cari nama, no HP, atau ID..."
+            placeholder="Cari nama, no. HP, atau anggota keluarga..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
@@ -248,7 +260,7 @@ export default function AdminRegistrations() {
                   <span className="text-slate-500 text-xs block">Tipe</span>
                   <span className="font-medium text-slate-800">
                     {reg.type === "FAMILY"
-                      ? `Keluarga (${reg.family_members[0]?.count || 0} org +)`
+                      ? `Keluarga (${reg.family_members?.length || 0} org +)`
                       : `Individu ${
                           reg.age_category === "ADULT"
                             ? "(Dewasa)"
@@ -327,7 +339,7 @@ export default function AdminRegistrations() {
                       </div>
                       <div className="text-xs text-slate-500">
                         {reg.type === "FAMILY"
-                          ? `${reg.family_members[0]?.count || 0} org tambahan`
+                          ? `${reg.family_members?.length || 0} org tambahan`
                           : reg.age_category === "ADULT"
                             ? "(Dewasa)"
                             : reg.age_category === "YOUTH"
