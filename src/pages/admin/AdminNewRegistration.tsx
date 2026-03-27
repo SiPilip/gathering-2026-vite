@@ -12,6 +12,9 @@ import { cn } from "../../lib/utils";
 
 type RegType = "INDIVIDUAL" | "FAMILY";
 type AgeCategory = "ADULT" | "YOUTH" | "CHILD";
+type ShirtSize = "S" | "M" | "L" | "XL" | "2XL" | "3XL" | "4XL";
+
+const SHIRT_SIZES: ShirtSize[] = ["S", "M", "L", "XL", "2XL", "3XL", "4XL"];
 
 export default function AdminNewRegistration() {
   const navigate = useNavigate();
@@ -21,20 +24,22 @@ export default function AdminNewRegistration() {
   const [type, setType] = useState<RegType>("INDIVIDUAL");
   const [repName, setRepName] = useState("");
   const [repAge, setRepAge] = useState<AgeCategory>("ADULT");
+  const [repShirtSize, setRepShirtSize] = useState<ShirtSize>("M");
   const [phone, setPhone] = useState("");
-  const [members, setMembers] = useState<{ name: string; age: AgeCategory }[]>(
-    [],
-  );
+  const [members, setMembers] = useState<
+    { name: string; age: AgeCategory; shirt_size: ShirtSize }[]
+  >([]);
 
   // Admin specific: Catat pembayaran awal
   const [initialPayment, setInitialPayment] = useState("");
 
-  const addMember = () => setMembers([...members, { name: "", age: "ADULT" }]);
+  const addMember = () =>
+    setMembers([...members, { name: "", age: "ADULT", shirt_size: "M" }]);
   const removeMember = (index: number) =>
     setMembers(members.filter((_, i) => i !== index));
   const updateMember = (
     index: number,
-    field: "name" | "age",
+    field: "name" | "age" | "shirt_size",
     value: string,
   ) => {
     const newMembers = [...members];
@@ -66,6 +71,7 @@ export default function AdminNewRegistration() {
           {
             type,
             age_category: repAge,
+            shirt_size: repShirtSize,
             representative_name: repName,
             phone_number: phone,
             total_fee: totalFee,
@@ -84,6 +90,7 @@ export default function AdminNewRegistration() {
           registration_id: regData.id,
           member_name: m.name,
           age_category: m.age,
+          shirt_size: m.shirt_size,
         }));
         await supabase.from("family_members").insert(familyData);
       }
@@ -145,7 +152,7 @@ export default function AdminNewRegistration() {
               )}
             >
               <span className="font-semibold text-slate-800">Individu</span>
-              <span className="text-sm text-slate-500">Rp 200.000</span>
+              <span className="text-sm text-slate-500">Rp 200.000 / orang</span>
             </button>
             <button
               type="button"
@@ -214,6 +221,30 @@ export default function AdminNewRegistration() {
                 </div>
               )}
             </div>
+
+            {/* Ukuran Baju Pendaftar Utama */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Ukuran Baju
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {SHIRT_SIZES.map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => setRepShirtSize(size)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg border-2 text-sm font-medium transition-all",
+                      repShirtSize === size
+                        ? "border-blue-500 bg-blue-50 text-blue-700"
+                        : "border-slate-200 text-slate-600 hover:border-blue-300",
+                    )}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -249,11 +280,24 @@ export default function AdminNewRegistration() {
                     onChange={(e) =>
                       updateMember(index, "age", e.target.value as AgeCategory)
                     }
-                    className="w-32 rounded-md border-slate-300 border px-3 py-2 text-sm bg-white outline-none"
+                    className="w-28 rounded-md border-slate-300 border px-3 py-2 text-sm bg-white outline-none"
                   >
                     <option value="ADULT">Dewasa</option>
                     <option value="YOUTH">Pemuda (P3MI)</option>
                     <option value="CHILD">Anak (SM)</option>
+                  </select>
+                  <select
+                    value={member.shirt_size}
+                    onChange={(e) =>
+                      updateMember(index, "shirt_size", e.target.value)
+                    }
+                    className="w-24 rounded-md border-slate-300 border px-3 py-2 text-sm bg-white outline-none"
+                  >
+                    {SHIRT_SIZES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
                   </select>
                   <button
                     type="button"

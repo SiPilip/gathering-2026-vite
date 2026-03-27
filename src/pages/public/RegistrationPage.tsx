@@ -14,6 +14,9 @@ import { cn } from "../../lib/utils";
 
 type RegType = "INDIVIDUAL" | "FAMILY";
 type AgeCategory = "ADULT" | "YOUTH" | "CHILD";
+type ShirtSize = "S" | "M" | "L" | "XL" | "2XL" | "3XL" | "4XL";
+
+const SHIRT_SIZES: ShirtSize[] = ["S", "M", "L", "XL", "2XL", "3XL", "4XL"];
 
 export default function RegistrationPage() {
   const navigate = useNavigate();
@@ -23,13 +26,14 @@ export default function RegistrationPage() {
   const [type, setType] = useState<RegType>("INDIVIDUAL");
   const [repName, setRepName] = useState("");
   const [repAge, setRepAge] = useState<AgeCategory>("ADULT");
+  const [repShirtSize, setRepShirtSize] = useState<ShirtSize>("M");
   const [phone, setPhone] = useState("");
-  const [members, setMembers] = useState<{ name: string; age: AgeCategory }[]>(
-    [],
-  );
+  const [members, setMembers] = useState<
+    { name: string; age: AgeCategory; shirt_size: ShirtSize }[]
+  >([]);
 
   const addMember = () => {
-    setMembers([...members, { name: "", age: "ADULT" }]);
+    setMembers([...members, { name: "", age: "ADULT", shirt_size: "M" }]);
   };
 
   const removeMember = (index: number) => {
@@ -38,7 +42,7 @@ export default function RegistrationPage() {
 
   const updateMember = (
     index: number,
-    field: "name" | "age",
+    field: "name" | "age" | "shirt_size",
     value: string,
   ) => {
     const newMembers = [...members];
@@ -68,6 +72,7 @@ export default function RegistrationPage() {
           {
             type,
             age_category: repAge,
+            shirt_size: repShirtSize,
             representative_name: repName,
             phone_number: phone,
             total_fee: totalFee,
@@ -85,6 +90,7 @@ export default function RegistrationPage() {
           registration_id: regData.id,
           member_name: m.name,
           age_category: m.age,
+          shirt_size: m.shirt_size,
         }));
 
         const { error: famError } = await supabase
@@ -243,6 +249,30 @@ export default function RegistrationPage() {
                 </div>
               )}
             </div>
+
+            {/* Ukuran Baju Pendaftar Utama */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Ukuran Baju
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {SHIRT_SIZES.map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => setRepShirtSize(size)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg border-2 text-sm font-medium transition-all",
+                      repShirtSize === size
+                        ? "border-blue-600 bg-blue-50 text-blue-700"
+                        : "border-slate-200 text-slate-600 hover:border-blue-300",
+                    )}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -312,6 +342,21 @@ export default function RegistrationPage() {
                           <option value="ADULT">Dewasa</option>
                           <option value="YOUTH">Pemuda (P3MI)</option>
                           <option value="CHILD">Anak (SM)</option>
+                        </select>
+                      </div>
+                      <div className="w-full sm:w-28 shrink-0">
+                        <select
+                          value={member.shirt_size}
+                          onChange={(e) =>
+                            updateMember(index, "shirt_size", e.target.value)
+                          }
+                          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-white"
+                        >
+                          {SHIRT_SIZES.map((s) => (
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
+                          ))}
                         </select>
                       </div>
                     </div>
