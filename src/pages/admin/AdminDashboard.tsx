@@ -1,7 +1,39 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
-import { Users, CreditCard, Wallet, TrendingUp, Loader2 } from "lucide-react";
+import {
+  Users,
+  CreditCard,
+  Wallet,
+  TrendingUp,
+  Loader2,
+  Shirt,
+} from "lucide-react";
 import { Link } from "react-router-dom";
+
+const SHIRT_LABEL: Record<string, string> = {
+  S: "S",
+  M: "M",
+  L: "L",
+  XL: "XL",
+  XXL: "XXL",
+  XXXL: "XXXL",
+  ANAK_2: "Anak 2",
+  ANAK_4: "Anak 4",
+  ANAK_6: "Anak 6",
+  ANAK_8: "Anak 8",
+  ANAK_10: "Anak 10",
+  ANAK_13: "Anak 13",
+};
+
+const ADULT_SIZE_ORDER = ["S", "M", "L", "XL", "XXL", "XXXL"];
+const CHILD_SIZE_ORDER = [
+  "ANAK_2",
+  "ANAK_4",
+  "ANAK_6",
+  "ANAK_8",
+  "ANAK_10",
+  "ANAK_13",
+];
 
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
@@ -11,6 +43,7 @@ export default function AdminDashboard() {
     totalCollected: 0,
     totalUnpaid: 0,
     recentRegistrations: [] as any[],
+    shirtSizes: {} as Record<string, number>,
   });
 
   useEffect(() => {
@@ -21,23 +54,39 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
 
-      // Get all registrations to calculate totals
+      // Get all registrations
       const { data: regData, error: regError } = await supabase
         .from("registrations")
         .select(
-          "id, type, total_fee, total_paid, status, representative_name, created_at",
+          "id, type, total_fee, total_paid, status, representative_name, created_at, shirt_size",
         )
         .order("created_at", { ascending: false });
 
       if (regError) throw regError;
 
+      // Get all family members shirt sizes
+      const { data: famData } = await supabase
+        .from("family_members")
+        .select("shirt_size");
+
       let totalExpected = 0;
       let totalCollected = 0;
+      const shirtSizes: Record<string, number> = {};
 
       regData.forEach((reg) => {
         if (reg.status !== "CANCELLED") {
           totalExpected += Number(reg.total_fee);
           totalCollected += Number(reg.total_paid);
+          if (reg.shirt_size) {
+            shirtSizes[reg.shirt_size] = (shirtSizes[reg.shirt_size] || 0) + 1;
+          }
+        }
+      });
+
+      // Also count family members
+      (famData ?? []).forEach((fm: any) => {
+        if (fm.shirt_size) {
+          shirtSizes[fm.shirt_size] = (shirtSizes[fm.shirt_size] || 0) + 1;
         }
       });
 
@@ -47,7 +96,8 @@ export default function AdminDashboard() {
         totalExpected,
         totalCollected,
         totalUnpaid: totalExpected - totalCollected,
-        recentRegistrations: regData.slice(0, 5), // take top 5 newest
+        recentRegistrations: regData.slice(0, 5),
+        shirtSizes,
       });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -271,6 +321,70 @@ export default function AdminDashboard() {
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Shirt Size Summary */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 flex items-center gap-2">
+          <Shirt className="h-5 w-5 text-slate-500" />
+          <h2 className="font-semibold text-slate-800">Rekap Ukuran Baju</h2>
+          <span className="ml-auto text-xs text-slate-400">
+            Termasuk seluruh anggota keluarga
+          </span>
+        </div>
+        <div className="p-4 sm:p-6 space-y-5">
+          {/* Adult sizes */}
+          <div>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+              Kaos 30 — Dewasa
+            </p>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {ADULT_SIZE_ORDER.map((size) => (
+                <div
+                  key={size}
+                  className="flex flex-col items-center bg-blue-50 border border-blue-100 rounded-xl p-3 gap-1"
+                >
+                  <span className="text-xs font-semibold text-blue-700">
+                    {size}
+                  </span>
+                  <span className="text-2xl font-bold text-blue-900">
+                    {stats.shirtSizes[size] ?? 0}
+                  </span>
+                  <span className="text-[10px] text-blue-400">pcs</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Child sizes */}
+          <div>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+              Anak
+            </p>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {CHILD_SIZE_ORDER.map((size) => (
+                <div
+                  key={size}
+                  className="flex flex-col items-center bg-purple-50 border border-purple-100 rounded-xl p-3 gap-1"
+                >
+                  <span className="text-xs font-semibold text-purple-700">
+                    {SHIRT_LABEL[size]}
+                  </span>
+                  <span className="text-2xl font-bold text-purple-900">
+                    {stats.shirtSizes[size] ?? 0}
+                  </span>
+                  <span className="text-[10px] text-purple-400">pcs</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Total */}
+          <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
+            <span className="text-sm text-slate-500">Total Baju</span>
+            <span className="font-bold text-slate-800 text-lg">
+              {Object.values(stats.shirtSizes).reduce((a, b) => a + b, 0)} pcs
+            </span>
+          </div>
         </div>
       </div>
     </div>

@@ -14,9 +14,96 @@ import { cn } from "../../lib/utils";
 
 type RegType = "INDIVIDUAL" | "FAMILY";
 type AgeCategory = "ADULT" | "YOUTH" | "CHILD";
-type ShirtSize = "S" | "M" | "L" | "XL" | "2XL" | "3XL" | "4XL";
+type ShirtSize =
+  | "S"
+  | "M"
+  | "L"
+  | "XL"
+  | "XXL"
+  | "XXXL"
+  | "ANAK_2"
+  | "ANAK_4"
+  | "ANAK_6"
+  | "ANAK_8"
+  | "ANAK_10"
+  | "ANAK_13";
 
-const SHIRT_SIZES: ShirtSize[] = ["S", "M", "L", "XL", "2XL", "3XL", "4XL"];
+const ADULT_SIZES: { value: ShirtSize; label: string; cm: number }[] = [
+  { value: "S", label: "S", cm: 88 },
+  { value: "M", label: "M", cm: 96 },
+  { value: "L", label: "L", cm: 102 },
+  { value: "XL", label: "XL", cm: 108 },
+  { value: "XXL", label: "XXL", cm: 114 },
+  { value: "XXXL", label: "XXXL", cm: 118 },
+];
+
+const CHILD_SIZES: { value: ShirtSize; label: string; cm: number }[] = [
+  { value: "ANAK_2", label: "2", cm: 56 },
+  { value: "ANAK_4", label: "4", cm: 62 },
+  { value: "ANAK_6", label: "6", cm: 72 },
+  { value: "ANAK_8", label: "8", cm: 76 },
+  { value: "ANAK_10", label: "10", cm: 78 },
+  { value: "ANAK_13", label: "13", cm: 80 },
+];
+
+function ShirtSizePicker({
+  value,
+  onChange,
+}: {
+  value: ShirtSize;
+  onChange: (s: ShirtSize) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div>
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+          Kaos 30 — Dewasa
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {ADULT_SIZES.map((s) => (
+            <button
+              key={s.value}
+              type="button"
+              onClick={() => onChange(s.value)}
+              className={cn(
+                "flex flex-col items-center px-3 py-1.5 rounded-lg border-2 text-sm font-medium transition-all",
+                value === s.value
+                  ? "border-blue-600 bg-blue-50 text-blue-700"
+                  : "border-slate-200 text-slate-600 hover:border-blue-300",
+              )}
+            >
+              <span>{s.label}</span>
+              <span className="text-[10px] text-slate-400">{s.cm}cm</span>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+          Anak
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {CHILD_SIZES.map((s) => (
+            <button
+              key={s.value}
+              type="button"
+              onClick={() => onChange(s.value)}
+              className={cn(
+                "flex flex-col items-center px-3 py-1.5 rounded-lg border-2 text-sm font-medium transition-all",
+                value === s.value
+                  ? "border-purple-600 bg-purple-50 text-purple-700"
+                  : "border-slate-200 text-slate-600 hover:border-purple-300",
+              )}
+            >
+              <span>{s.label}</span>
+              <span className="text-[10px] text-slate-400">{s.cm}cm</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function RegistrationPage() {
   const navigate = useNavigate();
@@ -33,7 +120,10 @@ export default function RegistrationPage() {
   >([]);
 
   const addMember = () => {
-    setMembers([...members, { name: "", age: "ADULT", shirt_size: "M" }]);
+    setMembers([
+      ...members,
+      { name: "", age: "ADULT", shirt_size: "M" as ShirtSize },
+    ]);
   };
 
   const removeMember = (index: number) => {
@@ -255,23 +345,10 @@ export default function RegistrationPage() {
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Ukuran Baju
               </label>
-              <div className="flex flex-wrap gap-2">
-                {SHIRT_SIZES.map((size) => (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => setRepShirtSize(size)}
-                    className={cn(
-                      "px-3 py-1.5 rounded-lg border-2 text-sm font-medium transition-all",
-                      repShirtSize === size
-                        ? "border-blue-600 bg-blue-50 text-blue-700"
-                        : "border-slate-200 text-slate-600 hover:border-blue-300",
-                    )}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
+              <ShirtSizePicker
+                value={repShirtSize}
+                onChange={setRepShirtSize}
+              />
             </div>
           </div>
         </div>
@@ -344,20 +421,11 @@ export default function RegistrationPage() {
                           <option value="CHILD">Anak (SM)</option>
                         </select>
                       </div>
-                      <div className="w-full sm:w-28 shrink-0">
-                        <select
-                          value={member.shirt_size}
-                          onChange={(e) =>
-                            updateMember(index, "shirt_size", e.target.value)
-                          }
-                          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-white"
-                        >
-                          {SHIRT_SIZES.map((s) => (
-                            <option key={s} value={s}>
-                              {s}
-                            </option>
-                          ))}
-                        </select>
+                      <div className="flex-1 pt-1">
+                        <ShirtSizePicker
+                          value={member.shirt_size as ShirtSize}
+                          onChange={(s) => updateMember(index, "shirt_size", s)}
+                        />
                       </div>
                     </div>
                     <button
