@@ -51,7 +51,7 @@ export default function AdminNewRegistration() {
       if (!repName || !phone)
         throw new Error("Nama dan No WhatsApp wajib diisi.");
 
-      const totalFee = (members.length + 1) * 100000;
+      const totalFee = type === "FAMILY" ? 450000 : 200000;
       const paymentAmount = Number(initialPayment) || 0;
 
       let status = "PENDING";
@@ -145,7 +145,7 @@ export default function AdminNewRegistration() {
               )}
             >
               <span className="font-semibold text-slate-800">Individu</span>
-              <span className="text-sm text-slate-500">Rp 100.000</span>
+              <span className="text-sm text-slate-500">Rp 200.000</span>
             </button>
             <button
               type="button"
@@ -160,7 +160,7 @@ export default function AdminNewRegistration() {
               <span className="font-semibold text-slate-800">
                 Keluarga (KK)
               </span>
-              <span className="text-sm text-slate-500">Rp 100.000/org</span>
+              <span className="text-sm text-slate-500">Rp 450.000 / KK</span>
             </button>
           </div>
         </div>
@@ -285,7 +285,7 @@ export default function AdminNewRegistration() {
           <p className="text-xs text-indigo-600 mt-2">
             Biaya seharusnya:{" "}
             <strong>
-              Rp {((members.length + 1) * 100000).toLocaleString("id-ID")}
+              Rp {(type === "FAMILY" ? 450000 : 200000).toLocaleString("id-ID")}
             </strong>
           </p>
         </div>

@@ -59,7 +59,7 @@ export default function RegistrationPage() {
           throw new Error("Semua nama anggota keluarga wajib diisi.");
       }
 
-      const totalFee = (members.length + 1) * 100000;
+      const totalFee = type === "FAMILY" ? 450000 : 200000;
 
       // 1. Insert Registration
       const { data: regData, error: regError } = await supabase
@@ -152,7 +152,7 @@ export default function RegistrationPage() {
               />
               <div className="text-center">
                 <div className="font-semibold text-slate-900">Individu</div>
-                <div className="text-sm mt-1">Rp 100.000 / Org</div>
+                <div className="text-sm mt-1">Rp 200.000</div>
               </div>
             </button>
 
@@ -176,7 +176,7 @@ export default function RegistrationPage() {
                 <div className="font-semibold text-slate-900">
                   Keluarga (1 KK)
                 </div>
-                <div className="text-sm mt-1">Rp 100.000 / Org</div>
+                <div className="text-sm mt-1">Rp 450.000 / KK</div>
               </div>
             </button>
           </div>
@@ -337,11 +337,7 @@ export default function RegistrationPage() {
               Total Biaya Pendaftaran
             </div>
             <div className="text-3xl font-bold">
-              Rp{" "}
-              {(
-                (members.length + (type === "FAMILY" ? 1 : 1)) *
-                100000
-              ).toLocaleString("id-ID")}
+              Rp {(type === "FAMILY" ? 450000 : 200000).toLocaleString("id-ID")}
             </div>
           </div>
           <button
