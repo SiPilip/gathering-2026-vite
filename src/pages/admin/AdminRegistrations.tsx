@@ -7,6 +7,7 @@ import {
   FileSpreadsheet,
   Eye,
   UserPlus,
+  Pencil,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -285,12 +286,20 @@ export default function AdminRegistrations() {
               </div>
 
               {/* Action */}
-              <Link
-                to={`/admin/payments/${reg.id}`}
-                className="flex items-center justify-center gap-1.5 w-full py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg font-medium text-sm transition-colors"
-              >
-                <Eye className="h-4 w-4" /> Detail &amp; Pembayaran
-              </Link>
+              <div className="flex gap-2">
+                <Link
+                  to={`/admin/registrations/${reg.id}/edit`}
+                  className="flex items-center justify-center gap-1.5 flex-1 py-2 bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-lg font-medium text-sm transition-colors"
+                >
+                  <Pencil className="h-4 w-4" /> Edit Profil
+                </Link>
+                <Link
+                  to={`/admin/payments/${reg.id}`}
+                  className="flex items-center justify-center gap-1.5 flex-1 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg font-medium text-sm transition-colors"
+                >
+                  <Eye className="h-4 w-4" /> Pembayaran
+                </Link>
+              </div>
             </div>
           ))}
         </div>
@@ -357,12 +366,20 @@ export default function AdminRegistrations() {
                     </td>
                     <td className="px-5 py-4">{getStatusBadge(reg.status)}</td>
                     <td className="px-5 py-4 text-center">
-                      <Link
-                        to={`/admin/payments/${reg.id}`}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-md font-medium text-xs transition-colors"
-                      >
-                        <Eye className="h-3.5 w-3.5" /> Detail Pembayaran
-                      </Link>
+                      <div className="flex items-center justify-center gap-2">
+                        <Link
+                          to={`/admin/registrations/${reg.id}/edit`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-md font-medium text-xs transition-colors"
+                        >
+                          <Pencil className="h-3.5 w-3.5" /> Edit Profil
+                        </Link>
+                        <Link
+                          to={`/admin/payments/${reg.id}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-md font-medium text-xs transition-colors"
+                        >
+                          <Eye className="h-3.5 w-3.5" /> Pembayaran
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}

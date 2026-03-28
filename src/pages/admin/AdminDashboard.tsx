@@ -7,6 +7,7 @@ import {
   TrendingUp,
   Loader2,
   Shirt,
+  UserCheck,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -44,6 +45,7 @@ export default function AdminDashboard() {
     totalUnpaid: 0,
     recentRegistrations: [] as any[],
     shirtSizes: {} as Record<string, number>,
+    ageCategories: { ADULT: 0, YOUTH: 0, CHILD: 0 },
   });
 
   useEffect(() => {
@@ -58,20 +60,21 @@ export default function AdminDashboard() {
       const { data: regData, error: regError } = await supabase
         .from("registrations")
         .select(
-          "id, type, total_fee, total_paid, status, representative_name, created_at, shirt_size",
+          "id, type, total_fee, total_paid, status, representative_name, created_at, shirt_size, age_category",
         )
         .order("created_at", { ascending: false });
 
       if (regError) throw regError;
 
-      // Get all family members shirt sizes
+      // Get all family members shirt sizes + age category
       const { data: famData } = await supabase
         .from("family_members")
-        .select("shirt_size");
+        .select("shirt_size, age_category");
 
       let totalExpected = 0;
       let totalCollected = 0;
       const shirtSizes: Record<string, number> = {};
+      const ageCategories = { ADULT: 0, YOUTH: 0, CHILD: 0 };
 
       regData.forEach((reg) => {
         if (reg.status !== "CANCELLED") {
@@ -80,24 +83,29 @@ export default function AdminDashboard() {
           if (reg.shirt_size) {
             shirtSizes[reg.shirt_size] = (shirtSizes[reg.shirt_size] || 0) + 1;
           }
+          // For INDIVIDUAL count their age; for FAMILY count the rep as ADULT
+          const cat = reg.age_category as keyof typeof ageCategories;
+          if (cat in ageCategories) ageCategories[cat] = ageCategories[cat] + 1;
         }
       });
 
-      // Also count family members
+      // Count family members ages + shirts
       (famData ?? []).forEach((fm: any) => {
         if (fm.shirt_size) {
           shirtSizes[fm.shirt_size] = (shirtSizes[fm.shirt_size] || 0) + 1;
         }
+        const cat = fm.age_category as keyof typeof ageCategories;
+        if (cat && cat in ageCategories) ageCategories[cat] = ageCategories[cat] + 1;
       });
 
       setStats({
-        totalRegistrants: regData.filter((r) => r.status !== "CANCELLED")
-          .length,
+        totalRegistrants: regData.filter((r) => r.status !== "CANCELLED").length,
         totalExpected,
         totalCollected,
         totalUnpaid: totalExpected - totalCollected,
         recentRegistrations: regData.slice(0, 5),
         shirtSizes,
+        ageCategories,
       });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -321,6 +329,40 @@ export default function AdminDashboard() {
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Age Category Recap */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 flex items-center gap-2">
+          <UserCheck className="h-5 w-5 text-slate-500" />
+          <h2 className="font-semibold text-slate-800">Rekap Kategori Peserta</h2>
+          <span className="ml-auto text-xs text-slate-400">Termasuk anggota keluarga</span>
+        </div>
+        <div className="p-4 sm:p-6">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="flex flex-col items-center bg-indigo-50 border border-indigo-100 rounded-2xl p-4 gap-1">
+              <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">Dewasa</span>
+              <span className="text-4xl font-bold text-indigo-900 mt-1">{stats.ageCategories.ADULT}</span>
+              <span className="text-xs text-indigo-400">orang</span>
+            </div>
+            <div className="flex flex-col items-center bg-sky-50 border border-sky-100 rounded-2xl p-4 gap-1">
+              <span className="text-xs font-semibold text-sky-600 uppercase tracking-wide">Pemuda (P3MI)</span>
+              <span className="text-4xl font-bold text-sky-900 mt-1">{stats.ageCategories.YOUTH}</span>
+              <span className="text-xs text-sky-400">orang</span>
+            </div>
+            <div className="flex flex-col items-center bg-emerald-50 border border-emerald-100 rounded-2xl p-4 gap-1">
+              <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">Anak (SM)</span>
+              <span className="text-4xl font-bold text-emerald-900 mt-1">{stats.ageCategories.CHILD}</span>
+              <span className="text-xs text-emerald-400">orang</span>
+            </div>
+          </div>
+          <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between items-center">
+            <span className="text-sm text-slate-500">Total Peserta</span>
+            <span className="font-bold text-slate-800 text-lg">
+              {stats.ageCategories.ADULT + stats.ageCategories.YOUTH + stats.ageCategories.CHILD} orang
+            </span>
+          </div>
         </div>
       </div>
 

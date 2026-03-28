@@ -10,6 +10,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminRegistrations from "./pages/admin/AdminRegistrations";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminNewRegistration from "./pages/admin/AdminNewRegistration";
+import AdminEditRegistration from "./pages/admin/AdminEditRegistration";
 
 export default function AppRoutes() {
   return (
@@ -30,6 +31,7 @@ export default function AppRoutes() {
           <Route index element={<AdminDashboard />} />
           <Route path="registrations" element={<AdminRegistrations />} />
           <Route path="registrations/new" element={<AdminNewRegistration />} />
+          <Route path="registrations/:id/edit" element={<AdminEditRegistration />} />
           <Route path="payments/:id" element={<AdminPayments />} />
         </Route>
       </Routes>
