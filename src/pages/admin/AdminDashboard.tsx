@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import {
   Users,
+  User,
   CreditCard,
   Wallet,
   TrendingUp,
@@ -46,6 +47,7 @@ export default function AdminDashboard() {
     recentRegistrations: [] as any[],
     shirtSizes: {} as Record<string, number>,
     ageCategories: { ADULT: 0, YOUTH: 0, CHILD: 0 },
+    regTypes: { FAMILY: 0, INDIVIDUAL: 0 },
   });
 
   useEffect(() => {
@@ -75,6 +77,7 @@ export default function AdminDashboard() {
       let totalCollected = 0;
       const shirtSizes: Record<string, number> = {};
       const ageCategories = { ADULT: 0, YOUTH: 0, CHILD: 0 };
+      const regTypes = { FAMILY: 0, INDIVIDUAL: 0 };
 
       regData.forEach((reg) => {
         if (reg.status !== "CANCELLED") {
@@ -83,9 +86,10 @@ export default function AdminDashboard() {
           if (reg.shirt_size) {
             shirtSizes[reg.shirt_size] = (shirtSizes[reg.shirt_size] || 0) + 1;
           }
-          // For INDIVIDUAL count their age; for FAMILY count the rep as ADULT
           const cat = reg.age_category as keyof typeof ageCategories;
           if (cat in ageCategories) ageCategories[cat] = ageCategories[cat] + 1;
+          if (reg.type === "FAMILY") regTypes.FAMILY += 1;
+          else regTypes.INDIVIDUAL += 1;
         }
       });
 
@@ -108,6 +112,7 @@ export default function AdminDashboard() {
         recentRegistrations: regData.slice(0, 5),
         shirtSizes,
         ageCategories,
+        regTypes,
       });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -206,6 +211,30 @@ export default function AdminDashboard() {
                 {formatCurrency(stats.totalUnpaid)}
               </h3>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Reg Type Recap */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 sm:p-5 flex items-center gap-4">
+          <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl">
+            <Users className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-indigo-600">Pendaftar Keluarga</p>
+            <p className="text-3xl font-bold text-indigo-900">{stats.regTypes.FAMILY}</p>
+            <p className="text-xs text-indigo-400 mt-0.5">KK × Rp 450.000</p>
+          </div>
+        </div>
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 flex items-center gap-4">
+          <div className="p-3 bg-slate-200 text-slate-600 rounded-xl">
+            <User className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-600">Pendaftar Individu</p>
+            <p className="text-3xl font-bold text-slate-800">{stats.regTypes.INDIVIDUAL}</p>
+            <p className="text-xs text-slate-400 mt-0.5">Org × Rp 200.000</p>
           </div>
         </div>
       </div>
