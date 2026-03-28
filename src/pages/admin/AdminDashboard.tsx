@@ -95,11 +95,13 @@ export default function AdminDashboard() {
           shirtSizes[fm.shirt_size] = (shirtSizes[fm.shirt_size] || 0) + 1;
         }
         const cat = fm.age_category as keyof typeof ageCategories;
-        if (cat && cat in ageCategories) ageCategories[cat] = ageCategories[cat] + 1;
+        if (cat && cat in ageCategories)
+          ageCategories[cat] = ageCategories[cat] + 1;
       });
 
       setStats({
-        totalRegistrants: regData.filter((r) => r.status !== "CANCELLED").length,
+        totalRegistrants: regData.filter((r) => r.status !== "CANCELLED")
+          .length,
         totalExpected,
         totalCollected,
         totalUnpaid: totalExpected - totalCollected,
@@ -208,159 +210,54 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Recent Registrations */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 flex justify-between items-center">
-          <h2 className="font-semibold text-slate-800">Pendaftar Terbaru</h2>
-          <Link
-            to="/admin/registrations"
-            className="text-sm font-medium text-blue-600 hover:text-blue-800"
-          >
-            Lihat Semua &rarr;
-          </Link>
-        </div>
-
-        {/* Mobile Card View */}
-        <div className="md:hidden divide-y divide-slate-100">
-          {stats.recentRegistrations.length === 0 ? (
-            <p className="px-4 py-8 text-center text-slate-500 text-sm">
-              Belum ada data pendaftar terbaru.
-            </p>
-          ) : (
-            stats.recentRegistrations.map((reg) => (
-              <div
-                key={reg.id}
-                className="px-4 py-3 flex items-center justify-between gap-3"
-              >
-                <div className="min-w-0">
-                  <p className="font-medium text-slate-900 text-sm truncate">
-                    {reg.representative_name}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    {reg.type === "FAMILY" ? "Keluarga" : "Individu"} &bull;{" "}
-                    {new Date(reg.created_at).toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "short",
-                    })}
-                  </p>
-                </div>
-                <span
-                  className={`shrink-0 inline-flex px-2 py-1 rounded-full text-xs font-semibold
-                    ${reg.status === "FULLY_PAID" ? "bg-green-100 text-green-700" : ""}
-                    ${reg.status === "PARTIAL_PAID" ? "bg-yellow-100 text-yellow-700" : ""}
-                    ${reg.status === "PENDING" ? "bg-slate-100 text-slate-700" : ""}
-                    ${reg.status === "CANCELLED" ? "bg-red-100 text-red-700" : ""}
-                  `}
-                >
-                  {reg.status === "FULLY_PAID"
-                    ? "Lunas"
-                    : reg.status === "PARTIAL_PAID"
-                      ? "Angsuran"
-                      : reg.status === "PENDING"
-                        ? "Belum Bayar"
-                        : "Batal"}
-                </span>
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* Desktop Table View */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-3">Nama Pendaftar</th>
-                <th className="px-6 py-3">Tipe</th>
-                <th className="px-6 py-3">Tanggal Daftar</th>
-                <th className="px-6 py-3">Status Pembayaran</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {stats.recentRegistrations.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="px-6 py-8 text-center text-slate-500"
-                  >
-                    Belum ada data pendaftar terbaru.
-                  </td>
-                </tr>
-              ) : (
-                stats.recentRegistrations.map((reg) => (
-                  <tr key={reg.id} className="hover:bg-slate-50/50">
-                    <td className="px-6 py-4 font-medium text-slate-900">
-                      {reg.representative_name}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex px-2 py-1 rounded-md text-xs font-semibold ${reg.type === "FAMILY" ? "bg-indigo-50 text-indigo-700" : "bg-slate-100 text-slate-700"}`}
-                      >
-                        {reg.type === "FAMILY" ? "Keluarga" : "Individu"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-slate-500">
-                      {new Date(reg.created_at).toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold
-                         ${reg.status === "FULLY_PAID" ? "bg-green-100 text-green-700" : ""}
-                         ${reg.status === "PARTIAL_PAID" ? "bg-yellow-100 text-yellow-700" : ""}
-                         ${reg.status === "PENDING" ? "bg-slate-100 text-slate-700" : ""}
-                         ${reg.status === "CANCELLED" ? "bg-red-100 text-red-700" : ""}
-                       `}
-                      >
-                        {reg.status === "FULLY_PAID"
-                          ? "Lunas"
-                          : reg.status === "PARTIAL_PAID"
-                            ? "Angsuran"
-                            : reg.status === "PENDING"
-                              ? "Belum Bayar"
-                              : "Batal"}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
       {/* Age Category Recap */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 flex items-center gap-2">
           <UserCheck className="h-5 w-5 text-slate-500" />
-          <h2 className="font-semibold text-slate-800">Rekap Kategori Peserta</h2>
-          <span className="ml-auto text-xs text-slate-400">Termasuk anggota keluarga</span>
+          <h2 className="font-semibold text-slate-800">
+            Rekap Kategori Peserta
+          </h2>
+          <span className="ml-auto text-xs text-slate-400">
+            Termasuk anggota keluarga
+          </span>
         </div>
         <div className="p-4 sm:p-6">
           <div className="grid grid-cols-3 gap-3">
             <div className="flex flex-col items-center bg-indigo-50 border border-indigo-100 rounded-2xl p-4 gap-1">
-              <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">Dewasa</span>
-              <span className="text-4xl font-bold text-indigo-900 mt-1">{stats.ageCategories.ADULT}</span>
+              <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">
+                Dewasa
+              </span>
+              <span className="text-4xl font-bold text-indigo-900 mt-1">
+                {stats.ageCategories.ADULT}
+              </span>
               <span className="text-xs text-indigo-400">orang</span>
             </div>
             <div className="flex flex-col items-center bg-sky-50 border border-sky-100 rounded-2xl p-4 gap-1">
-              <span className="text-xs font-semibold text-sky-600 uppercase tracking-wide">Pemuda (P3MI)</span>
-              <span className="text-4xl font-bold text-sky-900 mt-1">{stats.ageCategories.YOUTH}</span>
+              <span className="text-xs font-semibold text-sky-600 uppercase tracking-wide">
+                Pemuda (P3MI)
+              </span>
+              <span className="text-4xl font-bold text-sky-900 mt-1">
+                {stats.ageCategories.YOUTH}
+              </span>
               <span className="text-xs text-sky-400">orang</span>
             </div>
             <div className="flex flex-col items-center bg-emerald-50 border border-emerald-100 rounded-2xl p-4 gap-1">
-              <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">Anak (SM)</span>
-              <span className="text-4xl font-bold text-emerald-900 mt-1">{stats.ageCategories.CHILD}</span>
+              <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">
+                Anak (SM)
+              </span>
+              <span className="text-4xl font-bold text-emerald-900 mt-1">
+                {stats.ageCategories.CHILD}
+              </span>
               <span className="text-xs text-emerald-400">orang</span>
             </div>
           </div>
           <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between items-center">
             <span className="text-sm text-slate-500">Total Peserta</span>
             <span className="font-bold text-slate-800 text-lg">
-              {stats.ageCategories.ADULT + stats.ageCategories.YOUTH + stats.ageCategories.CHILD} orang
+              {stats.ageCategories.ADULT +
+                stats.ageCategories.YOUTH +
+                stats.ageCategories.CHILD}{" "}
+              orang
             </span>
           </div>
         </div>
@@ -426,6 +323,130 @@ export default function AdminDashboard() {
             <span className="font-bold text-slate-800 text-lg">
               {Object.values(stats.shirtSizes).reduce((a, b) => a + b, 0)} pcs
             </span>
+          </div>
+        </div>
+
+        {/* Recent Registrations */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 flex justify-between items-center">
+            <h2 className="font-semibold text-slate-800">Pendaftar Terbaru</h2>
+            <Link
+              to="/admin/registrations"
+              className="text-sm font-medium text-blue-600 hover:text-blue-800"
+            >
+              Lihat Semua &rarr;
+            </Link>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {stats.recentRegistrations.length === 0 ? (
+              <p className="px-4 py-8 text-center text-slate-500 text-sm">
+                Belum ada data pendaftar terbaru.
+              </p>
+            ) : (
+              stats.recentRegistrations.map((reg) => (
+                <div
+                  key={reg.id}
+                  className="px-4 py-3 flex items-center justify-between gap-3"
+                >
+                  <div className="min-w-0">
+                    <p className="font-medium text-slate-900 text-sm truncate">
+                      {reg.representative_name}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {reg.type === "FAMILY" ? "Keluarga" : "Individu"} &bull;{" "}
+                      {new Date(reg.created_at).toLocaleDateString("id-ID", {
+                        day: "numeric",
+                        month: "short",
+                      })}
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 inline-flex px-2 py-1 rounded-full text-xs font-semibold
+                    ${reg.status === "FULLY_PAID" ? "bg-green-100 text-green-700" : ""}
+                    ${reg.status === "PARTIAL_PAID" ? "bg-yellow-100 text-yellow-700" : ""}
+                    ${reg.status === "PENDING" ? "bg-slate-100 text-slate-700" : ""}
+                    ${reg.status === "CANCELLED" ? "bg-red-100 text-red-700" : ""}
+                  `}
+                  >
+                    {reg.status === "FULLY_PAID"
+                      ? "Lunas"
+                      : reg.status === "PARTIAL_PAID"
+                        ? "Angsuran"
+                        : reg.status === "PENDING"
+                          ? "Belum Bayar"
+                          : "Batal"}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
+                <tr>
+                  <th className="px-6 py-3">Nama Pendaftar</th>
+                  <th className="px-6 py-3">Tipe</th>
+                  <th className="px-6 py-3">Tanggal Daftar</th>
+                  <th className="px-6 py-3">Status Pembayaran</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {stats.recentRegistrations.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-6 py-8 text-center text-slate-500"
+                    >
+                      Belum ada data pendaftar terbaru.
+                    </td>
+                  </tr>
+                ) : (
+                  stats.recentRegistrations.map((reg) => (
+                    <tr key={reg.id} className="hover:bg-slate-50/50">
+                      <td className="px-6 py-4 font-medium text-slate-900">
+                        {reg.representative_name}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex px-2 py-1 rounded-md text-xs font-semibold ${reg.type === "FAMILY" ? "bg-indigo-50 text-indigo-700" : "bg-slate-100 text-slate-700"}`}
+                        >
+                          {reg.type === "FAMILY" ? "Keluarga" : "Individu"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-slate-500">
+                        {new Date(reg.created_at).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold
+                         ${reg.status === "FULLY_PAID" ? "bg-green-100 text-green-700" : ""}
+                         ${reg.status === "PARTIAL_PAID" ? "bg-yellow-100 text-yellow-700" : ""}
+                         ${reg.status === "PENDING" ? "bg-slate-100 text-slate-700" : ""}
+                         ${reg.status === "CANCELLED" ? "bg-red-100 text-red-700" : ""}
+                       `}
+                        >
+                          {reg.status === "FULLY_PAID"
+                            ? "Lunas"
+                            : reg.status === "PARTIAL_PAID"
+                              ? "Angsuran"
+                              : reg.status === "PENDING"
+                                ? "Belum Bayar"
+                                : "Batal"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
