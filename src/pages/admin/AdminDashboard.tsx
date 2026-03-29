@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
-import { Users, User, CreditCard, Wallet, TrendingUp, Loader2, Shirt, UserCheck, Heart } from "lucide-react";
+import { Users, User, CreditCard, Wallet, TrendingUp, Loader2, Shirt, UserCheck, Heart, Bus, Car } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const SHIRT_LABEL: Record<string, string> = {
@@ -44,6 +44,7 @@ export default function AdminDashboard() {
     regTypes: { FAMILY: 0, INDIVIDUAL: 0 },
     totalDonations: 0,
     donorCount: 0,
+    transport: { BUS: 0, OWN: 0 },
   });
 
   useEffect(() => {
@@ -58,7 +59,7 @@ export default function AdminDashboard() {
       const { data: regData, error: regError } = await supabase
         .from("registrations")
         .select(
-          "id, type, total_fee, total_paid, status, representative_name, created_at, shirt_size, age_category",
+          "id, type, total_fee, total_paid, status, representative_name, created_at, shirt_size, age_category, transport_mode",
         )
         .order("created_at", { ascending: false });
 
@@ -79,6 +80,7 @@ export default function AdminDashboard() {
       const shirtSizes: Record<string, number> = {};
       const ageCategories = { ADULT: 0, YOUTH: 0, CHILD: 0 };
       const regTypes = { FAMILY: 0, INDIVIDUAL: 0 };
+      const transport = { BUS: 0, OWN: 0 };
 
       regData.forEach((reg) => {
         if (reg.status !== "CANCELLED") {
@@ -91,6 +93,9 @@ export default function AdminDashboard() {
           if (cat in ageCategories) ageCategories[cat] = ageCategories[cat] + 1;
           if (reg.type === "FAMILY") regTypes.FAMILY += 1;
           else regTypes.INDIVIDUAL += 1;
+          const tm = reg.transport_mode as "BUS" | "OWN";
+          if (tm === "OWN") transport.OWN += 1;
+          else transport.BUS += 1;
         }
       });
 
@@ -116,6 +121,7 @@ export default function AdminDashboard() {
         regTypes,
         totalDonations,
         donorCount,
+        transport,
       });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -307,6 +313,64 @@ export default function AdminDashboard() {
               orang
             </span>
           </div>
+        </div>
+      </div>
+
+      {/* Transport Recap */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 flex items-center gap-2">
+          <Bus className="h-5 w-5 text-slate-500" />
+          <h2 className="font-semibold text-slate-800">Rekap Transportasi</h2>
+          <Link to="/admin/transport" className="ml-auto text-xs font-medium text-blue-500 hover:text-blue-700 transition-colors">
+            Kelola →
+          </Link>
+        </div>
+        <div className="p-4 sm:p-6 space-y-4">
+          {/* Bars */}
+          {(() => {
+            const total = stats.transport.BUS + stats.transport.OWN;
+            const busPct = total > 0 ? Math.round((stats.transport.BUS / total) * 100) : 0;
+            const ownPct = total > 0 ? 100 - busPct : 0;
+            return (
+              <>
+                {/* Bus */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <Bus className="h-4 w-4 text-blue-500" />
+                      <span className="font-medium text-slate-700">Bus Gereja</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-blue-700 text-lg">{stats.transport.BUS}</span>
+                      <span className="text-xs text-slate-400">kelompok ({busPct}%)</span>
+                    </div>
+                  </div>
+                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-500 rounded-full transition-all duration-500" style={{ width: `${busPct}%` }} />
+                  </div>
+                </div>
+                {/* Own */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <Car className="h-4 w-4 text-amber-500" />
+                      <span className="font-medium text-slate-700">Kendaraan Sendiri</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-amber-700 text-lg">{stats.transport.OWN}</span>
+                      <span className="text-xs text-slate-400">kelompok ({ownPct}%)</span>
+                    </div>
+                  </div>
+                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-amber-400 rounded-full transition-all duration-500" style={{ width: `${ownPct}%` }} />
+                  </div>
+                </div>
+                <div className="pt-1 flex justify-between text-xs text-slate-400 border-t border-slate-100">
+                  <span>Total {total} kelompok pendaftar</span>
+                </div>
+              </>
+            );
+          })()}
         </div>
       </div>
 

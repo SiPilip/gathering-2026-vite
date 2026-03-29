@@ -13,6 +13,7 @@ import AdminNewRegistration from "./pages/admin/AdminNewRegistration";
 import AdminEditRegistration from "./pages/admin/AdminEditRegistration";
 import AdminParticipantList from "./pages/admin/AdminParticipantList";
 import AdminDonors from "./pages/admin/AdminDonors";
+import AdminTransport from "./pages/admin/AdminTransport";
 
 export default function AppRoutes() {
   return (
@@ -36,6 +37,7 @@ export default function AppRoutes() {
           <Route path="registrations/:id/edit" element={<AdminEditRegistration />} />
           <Route path="participants" element={<AdminParticipantList />} />
           <Route path="donors" element={<AdminDonors />} />
+          <Route path="transport" element={<AdminTransport />} />
           <Route path="payments/:id" element={<AdminPayments />} />
         </Route>
       </Routes>
