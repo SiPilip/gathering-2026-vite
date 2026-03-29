@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "../../lib/supabase";
 import {
   Loader2, Search, Bus, Car, Users, User, CheckCircle2,
-  RefreshCw,
+  RefreshCw, FileSpreadsheet,
 } from "lucide-react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -122,6 +122,29 @@ export default function AdminTransport() {
     setLoading(false);
   };
 
+  const exportCSV = () => {
+    // Flatten all registrants into rows
+    const rows: string[][] = [];
+    rows.push(["No", "Nama", "Tipe", "Transportasi", "Anggota Keluarga"]);
+    let no = 1;
+    registrants.forEach(r => {
+      const members = (r.family_members ?? []).map(m => m.member_name).join(" | ");
+      rows.push([
+        String(no++),
+        r.representative_name,
+        r.type === "FAMILY" ? "Keluarga" : "Individu",
+        r.transport_mode === "BUS" ? "Bus Gereja" : "Kendaraan Sendiri",
+        members || "-",
+      ]);
+    });
+    const content = "data:text/csv;charset=utf-8,"
+      + rows.map(r => r.map(c => `"${c}"`).join(",")).join("\n");
+    const a = document.createElement("a");
+    a.href = encodeURI(content);
+    a.download = `transportasi_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+  };
+
   const toggleTransport = async (id: string, current: TransportMode) => {
     const next: TransportMode = current === "BUS" ? "OWN" : "BUS";
     setUpdatingId(id);
@@ -177,12 +200,20 @@ export default function AdminTransport() {
             Atur pilihan transportasi tiap pendaftar ke lokasi gathering.
           </p>
         </div>
-        <button
-          onClick={fetchData}
-          className="inline-flex items-center gap-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 px-3 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm"
-        >
-          <RefreshCw className="h-4 w-4" /> Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={exportCSV}
+            className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm"
+          >
+            <FileSpreadsheet className="h-4 w-4" /><span className="hidden sm:inline">Export CSV</span>
+          </button>
+          <button
+            onClick={fetchData}
+            className="inline-flex items-center gap-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 px-3 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm"
+          >
+            <RefreshCw className="h-4 w-4" /> Refresh
+          </button>
+        </div>
       </div>
 
       {/* ── Summary cards ── */}
