@@ -20,13 +20,16 @@ const SHIRT_LABEL: Record<string, string> = {
 
 const ADULT_SIZE_ORDER = ["S", "M", "L", "XL", "XXL", "XXXL"];
 const CHILD_SIZE_ORDER = [
-  "ANAK_2",
-  "ANAK_4",
-  "ANAK_6",
-  "ANAK_8",
-  "ANAK_10",
-  "ANAK_13",
+  "ANAK_2", "ANAK_4", "ANAK_6", "ANAK_8", "ANAK_10", "ANAK_13",
 ];
+
+// Harga per ukuran baju (Rp)
+const SHIRT_PRICE: Record<string, number> = {
+  S: 40000, M: 40000, L: 40000, XL: 40000,
+  XXL: 45000, XXXL: 50000,
+  ANAK_2: 40000, ANAK_4: 40000, ANAK_6: 40000,
+  ANAK_8: 40000, ANAK_10: 40000, ANAK_13: 40000,
+};
 
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
@@ -491,6 +494,78 @@ export default function AdminDashboard() {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Estimasi Biaya Baju */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 flex items-center gap-2">
+          <Shirt className="h-5 w-5 text-slate-500" />
+          <h2 className="font-semibold text-slate-800">Estimasi Biaya Baju</h2>
+          <span className="ml-auto text-xs text-slate-400">Berdasarkan data ukuran peserta</span>
+        </div>
+        <div className="p-4 sm:p-6 space-y-4">
+          {/* Tabel rincian */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-100">
+                  <th className="pb-2 text-left">Ukuran</th>
+                  <th className="pb-2 text-center">Jumlah</th>
+                  <th className="pb-2 text-right">Harga Satuan</th>
+                  <th className="pb-2 text-right">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {[...ADULT_SIZE_ORDER, ...CHILD_SIZE_ORDER]
+                  .filter(size => (stats.shirtSizes[size] ?? 0) > 0)
+                  .map(size => {
+                    const qty = stats.shirtSizes[size] ?? 0;
+                    const price = SHIRT_PRICE[size] ?? 0;
+                    const subtotal = qty * price;
+                    return (
+                      <tr key={size}>
+                        <td className="py-2">
+                          <span className={`inline-flex px-2 py-0.5 rounded text-xs font-semibold ${
+                            size.startsWith("ANAK_")
+                              ? "bg-purple-100 text-purple-700"
+                              : "bg-blue-100 text-blue-700"
+                          }`}>
+                            {SHIRT_LABEL[size]}
+                          </span>
+                        </td>
+                        <td className="py-2 text-center text-slate-700 font-medium">{qty} pcs</td>
+                        <td className="py-2 text-right text-slate-500 text-xs">{formatCurrency(price)}</td>
+                        <td className="py-2 text-right font-semibold text-slate-800">{formatCurrency(subtotal)}</td>
+                      </tr>
+                    );
+                  })
+                }
+                {Object.values(stats.shirtSizes).every(v => v === 0) && (
+                  <tr>
+                    <td colSpan={4} className="py-6 text-center text-slate-400 text-xs">Belum ada data ukuran baju.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          {/* Total */}
+          <div className="pt-3 border-t-2 border-slate-200 flex justify-between items-center">
+            <div>
+              <span className="text-sm font-semibold text-slate-600">Total Estimasi</span>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {Object.values(stats.shirtSizes).reduce((a, b) => a + b, 0)} baju
+              </p>
+            </div>
+            <span className="text-2xl font-bold text-slate-900">
+              {formatCurrency(
+                [...ADULT_SIZE_ORDER, ...CHILD_SIZE_ORDER].reduce(
+                  (total, size) => total + (stats.shirtSizes[size] ?? 0) * (SHIRT_PRICE[size] ?? 0),
+                  0
+                )
+              )}
+            </span>
           </div>
         </div>
       </div>
