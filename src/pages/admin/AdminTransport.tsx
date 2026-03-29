@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "../../lib/supabase";
 import {
-  Loader2, Search, Bus, Car, Users, User, Plus, Trash2, X,
+  Loader2, Search, Bus, Car, Plus, Trash2, X,
   RefreshCw, CheckCircle2, ChevronRight, XCircle, ArrowRightLeft,
 } from "lucide-react";
 
