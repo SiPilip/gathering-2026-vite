@@ -73,8 +73,8 @@ export default function AdminTransport() {
   const [savingCar, setSavingCar] = useState(false);
 
   // Assignment state
-  const [selectedPerson, setSelectedPerson] = useState<string | null>(null); // Person ID
-  const [movingId, setMovingId] = useState<string | null>(null); // Loading state for move
+  const [selectedPeople, setSelectedPeople] = useState<string[]>([]); // Array of Person IDs
+  const [movingIds, setMovingIds] = useState<string[]>([]); // Loading state for moves
 
   useEffect(() => { fetchData(); }, []);
 
@@ -142,33 +142,49 @@ export default function AdminTransport() {
     fetchData();
   };
 
-  // Move Person to Vehicle (or null for Bus)
-  const assignPerson = async (vehicleId: string | null) => {
-    if (!selectedPerson) return;
-    setMovingId(selectedPerson);
+  // Move Selected People to Vehicle (or null for Bus)
+  const assignPeople = async (vehicleId: string | null) => {
+    if (selectedPeople.length === 0) return;
+    setMovingIds([...selectedPeople]);
 
-    const isReg = selectedPerson.startsWith("reg_");
-    const dbId = selectedPerson.replace(/^(reg_|fam_)/, "");
-    const table = isReg ? "registrations" : "family_members";
+    // We need to group updates by table (registrations vs family_members)
+    const regsToUpdate = selectedPeople.filter(id => id.startsWith("reg_")).map(id => id.replace("reg_", ""));
+    const famsToUpdate = selectedPeople.filter(id => id.startsWith("fam_")).map(id => id.replace("fam_", ""));
 
-    // Set transport_mode to 'OWN' if assigning to a car, or 'BUS' if kicking out
-    const updates: any = { vehicle_id: vehicleId };
-    if (isReg) updates.transport_mode = vehicleId ? "OWN" : "BUS";
+    const promises = [];
 
-    const { error } = await supabase.from(table).update(updates).eq("id", dbId);
-
-    if (!error) {
-      // Also update local state for immediate feedback
-      setPeople(prev => prev.map(p => {
-        if (p.id === selectedPerson) {
-          return { ...p, vehicle_id: vehicleId, transport_mode: isReg ? (vehicleId ? "OWN" : "BUS") : p.transport_mode };
-        }
-        return p;
-      }));
+    if (regsToUpdate.length > 0) {
+      promises.push(supabase.from("registrations").update({ 
+        vehicle_id: vehicleId, 
+        transport_mode: vehicleId ? "OWN" : "BUS" 
+      }).in("id", regsToUpdate));
     }
 
-    setMovingId(null);
-    setSelectedPerson(null); // deselect after move
+    if (famsToUpdate.length > 0) {
+      promises.push(supabase.from("family_members").update({ 
+        vehicle_id: vehicleId 
+      }).in("id", famsToUpdate));
+    }
+
+    await Promise.all(promises);
+
+    // Update local state for immediate feedback
+    setPeople(prev => prev.map(p => {
+      if (selectedPeople.includes(p.id)) {
+        const isReg = p.id.startsWith("reg_");
+        return { ...p, vehicle_id: vehicleId, transport_mode: isReg ? (vehicleId ? "OWN" : "BUS") : p.transport_mode };
+      }
+      return p;
+    }));
+
+    setMovingIds([]);
+    setSelectedPeople([]); // deselect after move
+  };
+
+  const toggleSelection = (id: string) => {
+    setSelectedPeople(prev => 
+      prev.includes(id) ? prev.filter(pId => pId !== id) : [...prev, id]
+    );
   };
 
   // Memoized groupings
@@ -234,7 +250,7 @@ export default function AdminTransport() {
         
         <div className="hidden md:flex border-l border-slate-200 pl-4 items-center gap-2 text-slate-500 text-xs">
           <CheckCircle2 className="h-3.5 w-3.5 text-blue-500" />
-          Klik nama peserta, lalu klik mobil tujuan untuk memindahkannya.
+          Klik untuk memilih satu atau beberapa peserta, lalu klik mobil tujuan untuk memindahkannya.
         </div>
       </div>
 
@@ -248,25 +264,34 @@ export default function AdminTransport() {
           
           {/* LEFT: Unassigned (Bus) */}
           <div className="lg:col-span-4 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col h-[600px]">
-            <div className="bg-slate-50 border-b border-slate-100 p-4 sticky top-0 z-10 flex items-center justify-between">
+            <div 
+              onClick={() => { if (selectedPeople.length > 0) assignPeople(null); }}
+              className={`p-4 sticky top-0 z-10 flex items-center justify-between transition-colors ${
+                selectedPeople.length > 0 ? "bg-blue-100 hover:bg-blue-200 cursor-pointer border-b border-blue-200" : "bg-slate-50 border-b border-slate-100"
+              }`}
+            >
               <div className="flex items-center gap-2">
-                <Bus className="h-5 w-5 text-blue-600" />
-                <h2 className="font-bold text-slate-800">Bus / Belum Diatur</h2>
+                <Bus className={`h-5 w-5 ${selectedPeople.length > 0 ? "text-blue-700 animate-pulse" : "text-blue-600"}`} />
+                <h2 className={`font-bold ${selectedPeople.length > 0 ? "text-blue-800" : "text-slate-800"}`}>
+                  {selectedPeople.length > 0 ? `Pindah ${selectedPeople.length} peserta ke Bus` : "Bus / Belum Diatur"}
+                </h2>
               </div>
-              <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">
-                {unassignedBus.length}
-              </span>
+              {selectedPeople.length === 0 && (
+                <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                  {unassignedBus.length}
+                </span>
+              )}
             </div>
             <div className="flex-1 overflow-y-auto p-3 space-y-2 relative">
-              {movingId && selectedPerson && !unassignedBus.find(p=>p.id === movingId) && (
+              {movingIds.length > 0 && selectedPeople.length > 0 && movingIds.some(id => unassignedBus.find(p=>p.id === id)) && (
                 <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-20" />
               )}
               {unassignedBus.map(p => (
                 <PersonItem 
                   key={p.id} p={p} 
-                  active={selectedPerson === p.id}
-                  onClick={() => setSelectedPerson(p.id === selectedPerson ? null : p.id)}
-                  actionIcon={selectedPerson === p.id ? ArrowRightLeft : ChevronRight}
+                  active={selectedPeople.includes(p.id)}
+                  onClick={() => toggleSelection(p.id)}
+                  actionIcon={selectedPeople.includes(p.id) ? ArrowRightLeft : ChevronRight}
                 />
               ))}
               {unassignedBus.length === 0 && (
@@ -280,15 +305,15 @@ export default function AdminTransport() {
             {assignedCars.map(car => {
               const isFull = car.totalPassengers >= car.capacity;
               return (
-                <div key={car.id} className={`rounded-2xl border bg-white shadow-sm flex flex-col transition-all ${selectedPerson ? "ring-2 ring-indigo-500/50 hover:ring-indigo-500 ring-offset-2 cursor-pointer" : "border-slate-200"}`}
+                <div key={car.id} className={`rounded-2xl border bg-white shadow-sm flex flex-col transition-all ${selectedPeople.length > 0 ? "ring-2 ring-indigo-500/50 hover:ring-indigo-500 ring-offset-2 cursor-pointer" : "border-slate-200"}`}
                      onClick={() => {
-                        if (selectedPerson) assignPerson(car.id);
+                        if (selectedPeople.length > 0) assignPeople(car.id);
                      }}>
                   
                   {/* Car Header */}
-                  <div className={`p-3 border-b flex items-start justify-between ${selectedPerson ? "bg-indigo-50 border-indigo-100" : "bg-slate-50 border-slate-100 rounded-t-2xl"}`}>
+                  <div className={`p-3 border-b flex items-start justify-between ${selectedPeople.length > 0 ? "bg-indigo-50 border-indigo-100" : "bg-slate-50 border-slate-100 rounded-t-2xl"}`}>
                     <div className="flex items-center gap-2 text-slate-800">
-                      <Car className={`h-4 w-4 ${selectedPerson ? "text-indigo-600" : "text-amber-500"}`} />
+                      <Car className={`h-4 w-4 ${selectedPeople.length > 0 ? "text-indigo-600" : "text-amber-500"}`} />
                       <div className="min-w-0">
                         <p className="font-bold text-sm truncate pr-2">{car.name}</p>
                         <p className="text-[10px] text-slate-500">{car.totalPassengers} / {car.capacity} kursi</p>
@@ -298,7 +323,7 @@ export default function AdminTransport() {
                       <span className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${isFull ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-700"}`}>
                         {isFull ? "Penuh" : `${car.capacity - car.totalPassengers} sisa`}
                       </span>
-                      {!selectedPerson && (
+                      {selectedPeople.length === 0 && (
                         <button onClick={(e) => { e.stopPropagation(); handleDeleteCar(car.id, car.name); }} 
                           className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-red-600 transition-colors">
                           <Trash2 className="h-3.5 w-3.5" />
@@ -311,11 +336,16 @@ export default function AdminTransport() {
                   <div className="p-2 space-y-1.5 min-h-[120px]">
                     {car.passengers.map(p => (
                       <div key={p.id} className="relative group">
-                        <PersonItem p={p} onClick={() => setSelectedPerson(p.id === selectedPerson ? null : p.id)} active={selectedPerson === p.id} />
-                        {/* Kick out button (only visible on hover, drops passenger back to bus) */}
-                        {!selectedPerson && (
-                          <button onClick={(e) => { e.stopPropagation(); setSelectedPerson(p.id); assignPerson(null); }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 bg-white text-slate-400 hover:text-red-500 rounded opacity-0 group-hover:opacity-100 transition-opacity shadow-sm border border-slate-200">
+                        <PersonItem p={p} onClick={() => toggleSelection(p.id)} active={selectedPeople.includes(p.id)} />
+                        {/* Kick out button (visible on hover or always if mobile) */}
+                        {selectedPeople.length === 0 && (
+                          <button onClick={(e) => { 
+                              e.stopPropagation(); 
+                              setSelectedPeople([p.id]); 
+                              setTimeout(() => assignPeople(null), 0); 
+                            }}
+                            title="Keluarkan ke Bus"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-red-50 text-red-500 hover:text-white hover:bg-red-500 rounded-md opacity-0 group-hover:opacity-100 transition-all shadow-sm border border-red-100 flex items-center gap-1 z-10">
                             <XCircle className="h-3.5 w-3.5" />
                           </button>
                         )}
@@ -324,9 +354,9 @@ export default function AdminTransport() {
                     {car.totalPassengers === 0 && (
                       <div className="h-full flex items-center justify-center text-xs text-slate-400 py-6 italic">Kosong</div>
                     )}
-                    {selectedPerson && !isFull && !car.passengers.find(p=>p.id===selectedPerson) && (
+                    {selectedPeople.length > 0 && !isFull && (
                       <div className="border border-indigo-200 border-dashed rounded-lg bg-indigo-50/50 p-2 text-center text-xs text-indigo-400 font-medium py-3">
-                        Klik untuk memasukkan {people.find(p=>p.id===selectedPerson)?.name}
+                        Klik untuk memasukkan {selectedPeople.length} peserta ke sini
                       </div>
                     )}
                   </div>

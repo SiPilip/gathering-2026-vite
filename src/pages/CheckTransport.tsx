@@ -7,7 +7,9 @@ interface TransportResult {
   name: string;
   type: "HEAD" | "MEMBER" | "INDIVIDUAL";
   transport_mode: "BUS" | "OWN";
+  vehicle_id?: string;
   vehicle_name?: string;
+  coPassengers?: { name: string; type: string }[];
 }
 
 export default function CheckTransport() {
@@ -29,8 +31,8 @@ export default function CheckTransport() {
       const { data: regData } = await supabase
         .from("registrations")
         .select(`
-          representative_name, type, transport_mode,
-          vehicles(name)
+          representative_name, type, transport_mode, vehicle_id,
+          vehicles(id, name)
         `)
         .ilike("representative_name", `%${q}%`)
         .neq("status", "CANCELLED");
@@ -39,22 +41,25 @@ export default function CheckTransport() {
       const { data: famData } = await supabase
         .from("family_members")
         .select(`
-          member_name, 
-          vehicles(name),
+          member_name, vehicle_id,
+          vehicles(id, name),
           registrations!inner(transport_mode, status)
         `)
         .ilike("member_name", `%${q}%`)
         .neq("registrations.status", "CANCELLED");
 
       const combined: TransportResult[] = [];
+      const vehicleIdsToFetch = new Set<string>();
       
       (regData || []).forEach((r: any) => {
         combined.push({
           name: r.representative_name,
           type: r.type === "FAMILY" ? "HEAD" : "INDIVIDUAL",
           transport_mode: r.transport_mode,
+          vehicle_id: r.vehicle_id,
           vehicle_name: r.vehicles?.name,
         });
+        if (r.vehicle_id) vehicleIdsToFetch.add(r.vehicle_id);
       });
 
       (famData || []).forEach((f: any) => {
@@ -63,9 +68,40 @@ export default function CheckTransport() {
           type: "MEMBER",
           // family members follow HEAD's transport_mode, but are practically OWN if they have a vehicle_id
           transport_mode: f.vehicles ? "OWN" : f.registrations.transport_mode,
+          vehicle_id: f.vehicle_id,
           vehicle_name: f.vehicles?.name,
         });
+        if (f.vehicle_id) vehicleIdsToFetch.add(f.vehicle_id);
       });
+
+      // Fetch co-passengers for vehicles found
+      if (vehicleIdsToFetch.size > 0) {
+        const vIds = Array.from(vehicleIdsToFetch);
+        // Get all reg heads and individuals in these vehicles
+        const { data: vRegs } = await supabase.from("registrations")
+            .select("representative_name, type, vehicle_id").in("vehicle_id", vIds).neq("status", "CANCELLED");
+        // Get all members in these vehicles
+        const { data: vFams } = await supabase.from("family_members")
+            .select("member_name, vehicle_id, registrations!inner(status)").in("vehicle_id", vIds).neq("registrations.status", "CANCELLED");
+
+        const carMap: Record<string, {name: string, type:string}[]> = {};
+        
+        vIds.forEach(id => carMap[id] = []);
+
+        (vRegs || []).forEach((r:any) => {
+           carMap[r.vehicle_id].push({ name: r.representative_name, type: r.type === "FAMILY" ? "HEAD" : "INDIVIDUAL" });
+        });
+        (vFams || []).forEach((f:any) => {
+           carMap[f.vehicle_id].push({ name: f.member_name, type: "MEMBER" });
+        });
+
+        // Attach to results, excluding themselves
+        combined.forEach(c => {
+           if (c.vehicle_id && carMap[c.vehicle_id]) {
+               c.coPassengers = carMap[c.vehicle_id].filter(p => p.name !== c.name);
+           }
+        });
+      }
 
       setResults(combined);
     } catch (error) {
@@ -165,6 +201,20 @@ export default function CheckTransport() {
                         </p>
                       </div>
                     </div>
+
+                    {/* Co-Passengers section */}
+                    {r.vehicle_name && r.coPassengers && r.coPassengers.length > 0 && (
+                      <div className="w-full sm:w-full mt-2 sm:mt-0 pt-3 sm:pt-4 border-t border-slate-100/80">
+                        <p className="text-xs font-semibold text-slate-500 mb-2">Teman Satu Mobil Anda ({r.coPassengers.length}):</p>
+                        <div className="flex flex-wrap gap-2">
+                          {r.coPassengers.map((cp, idx) => (
+                            <span key={idx} className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                              {cp.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                   </div>
                 ))}
