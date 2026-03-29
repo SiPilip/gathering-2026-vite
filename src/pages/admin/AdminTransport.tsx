@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "../../lib/supabase";
 import {
   Loader2, Search, Bus, Car, Plus, Trash2, X,
-  RefreshCw, CheckCircle2, ChevronRight, XCircle, ArrowRightLeft,
+  RefreshCw, CheckCircle2, ChevronRight, XCircle, ArrowRightLeft, Printer,
 } from "lucide-react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -230,9 +230,13 @@ export default function AdminTransport() {
             Kelompokkan jemaat ke dalam mobil, atau biarkan di Bus Gereja.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 print:hidden">
+          <button onClick={() => window.print()}
+            className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm">
+            <Printer className="h-4 w-4" /> Export PDF
+          </button>
           <button onClick={() => setShowAddCar(true)}
-            className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-lg font-medium text-sm transition-colors">
+            className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm">
             <Plus className="h-4 w-4" /> Tambah Mobil
           </button>
           <button onClick={fetchData}
@@ -243,7 +247,7 @@ export default function AdminTransport() {
       </div>
 
       {/* ── SEARCH & INSTRUCTIONS ── */}
-      <div className="bg-white border text-sm border-slate-200 rounded-xl shadow-sm p-3 relative flex items-center gap-3">
+      <div className="bg-white border text-sm border-slate-200 rounded-xl shadow-sm p-3 relative flex items-center gap-3 print:hidden">
         <Search className="h-4 w-4 text-slate-400 shrink-0 ml-1" />
         <input type="text" placeholder="Cari nama peserta..." value={search} onChange={e => setSearch(e.target.value)}
           className="flex-1 outline-none text-slate-700 bg-transparent" />
@@ -263,7 +267,8 @@ export default function AdminTransport() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
           {/* LEFT: Unassigned (Bus) */}
-          <div className="lg:col-span-4 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col h-[600px]">
+          {/* Hide this panel when printing if it's not the main focus, or keep it. Let's hide it for cleaner car print. */}
+          <div className="lg:col-span-4 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col h-[600px] print:hidden">
             <div 
               onClick={() => { if (selectedPeople.length > 0) assignPeople(null); }}
               className={`p-4 sticky top-0 z-10 flex items-center justify-between transition-colors ${
@@ -301,11 +306,14 @@ export default function AdminTransport() {
           </div>
 
           {/* RIGHT: Vehicles Grid */}
-          <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="lg:col-span-8 print:col-span-12 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 print:grid-cols-3 gap-4 print:gap-6 print:block print:w-full">
+            {/* For print layout, we want to break page to avoid cutting cars if possible */}
+            <style>{`@media print { .print-avoid-break { break-inside: avoid; } }`}</style>
+            
             {assignedCars.map(car => {
               const isFull = car.totalPassengers >= car.capacity;
               return (
-                <div key={car.id} className={`rounded-2xl border bg-white shadow-sm flex flex-col transition-all ${selectedPeople.length > 0 ? "ring-2 ring-indigo-500/50 hover:ring-indigo-500 ring-offset-2 cursor-pointer" : "border-slate-200"}`}
+                <div key={car.id} className={`print-avoid-break rounded-2xl border bg-white shadow-sm flex flex-col transition-all ${selectedPeople.length > 0 ? "ring-2 ring-indigo-500/50 hover:ring-indigo-500 ring-offset-2 cursor-pointer print:ring-0" : "border-slate-200"}`}
                      onClick={() => {
                         if (selectedPeople.length > 0) assignPeople(car.id);
                      }}>
@@ -325,7 +333,7 @@ export default function AdminTransport() {
                       </span>
                       {selectedPeople.length === 0 && (
                         <button onClick={(e) => { e.stopPropagation(); handleDeleteCar(car.id, car.name); }} 
-                          className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-red-600 transition-colors">
+                          className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-red-600 transition-colors print:hidden">
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       )}
@@ -345,7 +353,7 @@ export default function AdminTransport() {
                               setTimeout(() => assignPeople(null), 0); 
                             }}
                             title="Keluarkan ke Bus"
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-red-50 text-red-500 hover:text-white hover:bg-red-500 rounded-md opacity-0 group-hover:opacity-100 transition-all shadow-sm border border-red-100 flex items-center gap-1 z-10">
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-red-50 text-red-500 hover:text-white hover:bg-red-500 rounded-md opacity-0 group-hover:opacity-100 transition-all shadow-sm border border-red-100 flex items-center gap-1 z-10 print:hidden">
                             <XCircle className="h-3.5 w-3.5" />
                           </button>
                         )}
@@ -355,7 +363,7 @@ export default function AdminTransport() {
                       <div className="h-full flex items-center justify-center text-xs text-slate-400 py-6 italic">Kosong</div>
                     )}
                     {selectedPeople.length > 0 && !isFull && (
-                      <div className="border border-indigo-200 border-dashed rounded-lg bg-indigo-50/50 p-2 text-center text-xs text-indigo-400 font-medium py-3">
+                      <div className="border border-indigo-200 border-dashed rounded-lg bg-indigo-50/50 p-2 text-center text-xs text-indigo-400 font-medium py-3 print:hidden">
                         Klik untuk memasukkan {selectedPeople.length} peserta ke sini
                       </div>
                     )}

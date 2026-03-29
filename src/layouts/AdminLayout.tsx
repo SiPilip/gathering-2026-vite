@@ -99,7 +99,7 @@ export default function AdminLayout() {
       {/* ========================= */}
       {/* DESKTOP SIDEBAR           */}
       {/* ========================= */}
-      <aside className="w-64 bg-slate-900 text-slate-300 flex-col hidden md:flex shrink-0">
+      <aside className="w-64 bg-slate-900 text-slate-300 flex-col hidden md:flex shrink-0 print:hidden">
         <div className="h-16 flex items-center px-6 border-b border-slate-800">
           <Link to="/" className="flex items-center gap-2 text-white">
             <Users className="h-6 w-6 text-blue-500" />
@@ -139,12 +139,12 @@ export default function AdminLayout() {
       {/* ========================= */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          className="fixed inset-0 z-40 bg-black/50 md:hidden print:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
       <aside
-        className={`fixed top-0 left-0 h-full w-72 bg-slate-900 text-slate-300 flex flex-col z-50 transition-transform duration-300 md:hidden ${
+        className={`fixed top-0 left-0 h-full w-72 bg-slate-900 text-slate-300 flex flex-col z-50 transition-transform duration-300 md:hidden print:hidden ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -198,7 +198,7 @@ export default function AdminLayout() {
       {/* ========================= */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile Top Header */}
-        <header className="md:hidden h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 sticky top-0 z-30 shadow-sm">
+        <header className="md:hidden h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 sticky top-0 z-30 shadow-sm print:hidden">
           <button
             onClick={() => setSidebarOpen(true)}
             className="p-2 rounded-md text-slate-600 hover:bg-slate-100 transition-colors"
@@ -219,7 +219,7 @@ export default function AdminLayout() {
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 pb-6">
+        <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 pb-6 print:p-0 print:overflow-visible">
           <Outlet />
         </div>
       </main>
