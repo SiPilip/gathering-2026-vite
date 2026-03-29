@@ -59,7 +59,7 @@ export default function AdminDashboard() {
       const { data: regData, error: regError } = await supabase
         .from("registrations")
         .select(
-          "id, type, total_fee, total_paid, status, representative_name, created_at, shirt_size, age_category, transport_mode",
+          "id, type, total_fee, total_paid, status, representative_name, created_at, shirt_size, age_category, transport_mode, vehicle_id",
         )
         .order("created_at", { ascending: false });
 
@@ -70,10 +70,10 @@ export default function AdminDashboard() {
       const totalDonations = (donorData ?? []).reduce((s: number, d: any) => s + Number(d.amount), 0);
       const donorCount = donorData?.length ?? 0;
 
-      // Get all family members shirt sizes + age category
+      // Get all family members shirt sizes, age category, and transport info
       const { data: famData } = await supabase
         .from("family_members")
-        .select("shirt_size, age_category");
+        .select("shirt_size, age_category, vehicle_id");
 
       let totalExpected = 0;
       let totalCollected = 0;
@@ -93,8 +93,9 @@ export default function AdminDashboard() {
           if (cat in ageCategories) ageCategories[cat] = ageCategories[cat] + 1;
           if (reg.type === "FAMILY") regTypes.FAMILY += 1;
           else regTypes.INDIVIDUAL += 1;
-          const tm = reg.transport_mode as "BUS" | "OWN";
-          if (tm === "OWN") transport.OWN += 1;
+          
+          // Head / Individual transport
+          if (reg.transport_mode === "OWN" || reg.vehicle_id) transport.OWN += 1;
           else transport.BUS += 1;
         }
       });
@@ -107,6 +108,11 @@ export default function AdminDashboard() {
         const cat = fm.age_category as keyof typeof ageCategories;
         if (cat && cat in ageCategories)
           ageCategories[cat] = ageCategories[cat] + 1;
+        
+        // Member transport (family members usually follow HEAD's transport_mode natively, but can be split into vehicles)
+        // Note: we just count vehicle_id to know if they are in OWN car. If not in a vehicle, we assume BUS by default.
+        if (fm.vehicle_id) transport.OWN += 1;
+        else transport.BUS += 1;
       });
 
       setStats({
@@ -366,7 +372,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <div className="pt-1 flex justify-between text-xs text-slate-400 border-t border-slate-100">
-                  <span>Total {total} kelompok pendaftar</span>
+                  <span>Total {total} penumpang terdata</span>
                 </div>
               </>
             );

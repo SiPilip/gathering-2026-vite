@@ -1,386 +1,364 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "../../lib/supabase";
 import {
-  Loader2, Search, Bus, Car, Users, User, CheckCircle2,
-  RefreshCw, FileSpreadsheet,
+  Loader2, Search, Bus, Car, Users, User, Plus, Trash2, X,
+  RefreshCw, CheckCircle2, ChevronRight, XCircle, ArrowRightLeft,
 } from "lucide-react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
-type TransportMode = "BUS" | "OWN";
-
-interface Registrant {
+interface Vehicle {
   id: string;
-  representative_name: string;
-  type: "FAMILY" | "INDIVIDUAL";
-  transport_mode: TransportMode;
-  age_category: string;
-  family_members: { member_name: string }[];
+  name: string;
+  capacity: number;
+}
+
+interface Person {
+  id: string; // "reg_xxx" or "fam_xxx"
+  name: string;
+  type: "HEAD" | "INDIVIDUAL" | "MEMBER";
+  reg_id: string; // The root registration ID (for grouping)
+  vehicle_id: string | null;
+  transport_mode: "BUS" | "OWN";
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("");
+function getInitials(n: string) {
+  return n.split(" ").slice(0, 2).map(w => w[0]?.toUpperCase() ?? "").join("");
 }
-
 const AVATAR_COLORS = [
-  "bg-indigo-100 text-indigo-700",
-  "bg-sky-100 text-sky-700",
-  "bg-emerald-100 text-emerald-700",
-  "bg-amber-100 text-amber-700",
-  "bg-rose-100 text-rose-700",
-  "bg-violet-100 text-violet-700",
-  "bg-teal-100 text-teal-700",
-  "bg-orange-100 text-orange-700",
+  "bg-indigo-100 text-indigo-700", "bg-sky-100 text-sky-700", "bg-emerald-100 text-emerald-700",
+  "bg-amber-100 text-amber-700", "bg-rose-100 text-rose-700", "bg-violet-100 text-violet-700",
 ];
-
-function colorFor(name: string) {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffff;
+function colorFor(n: string) {
+  let h = 0; for (let i = 0; i < n.length; i++) h = (h * 31 + n.charCodeAt(i)) & 0xffff;
   return AVATAR_COLORS[h % AVATAR_COLORS.length];
 }
 
-// ── Passenger Card ───────────────────────────────────────────────────────────
-function PassengerCard({ name, isHead, type }: { name: string; isHead: boolean; type?: "FAMILY" | "INDIVIDUAL" }) {
+// ── Item Passenger Card ──────────────────────────────────────────────────────
+function PersonItem({ p, onClick, active, actionIcon: ActionIcon }: { p: Person, onClick?: () => void, active?: boolean, actionIcon?: any }) {
   return (
     <div
-      className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all ${
-        isHead
-          ? "bg-white border-slate-200 shadow-sm"
-          : "bg-slate-50 border-slate-100"
+      onClick={onClick}
+      className={`flex items-center gap-2.5 p-2 rounded-lg border transition-all ${onClick ? "cursor-pointer hover:border-blue-300 hover:bg-blue-50/50" : ""} ${
+        active ? "border-blue-400 bg-blue-50 shadow-sm ring-1 ring-blue-400" : "bg-white border-slate-200"
       }`}
     >
-      <div
-        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${colorFor(name)}`}
-      >
-        {getInitials(name)}
+      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${colorFor(p.name)}`}>
+        {getInitials(p.name)}
       </div>
-      <div className="min-w-0">
-        <p className={`text-xs font-semibold truncate ${isHead ? "text-slate-900" : "text-slate-600"}`}>
-          {name}
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-semibold text-slate-800 truncate">{p.name}</p>
+        <p className="text-[10px] text-slate-400 truncate">
+          {p.type === "HEAD" && "Kepala Keluarga"}
+          {p.type === "MEMBER" && "Anggota KK"}
+          {p.type === "INDIVIDUAL" && "Individu"}
         </p>
-        {isHead && type && (
-          <p className="text-[10px] text-slate-400 leading-tight">
-            {type === "FAMILY" ? "Kepala Keluarga" : "Individu"}
-          </p>
-        )}
       </div>
+      {ActionIcon && <ActionIcon className="h-4 w-4 text-slate-400 shrink-0" />}
     </div>
   );
 }
 
-// ── Group Card (for family groups within bus/own) ────────────────────────────
-function GroupCard({ reg }: { reg: Registrant }) {
-  const memberCount = reg.family_members?.length ?? 0;
-  if (reg.type === "INDIVIDUAL") {
-    return <PassengerCard name={reg.representative_name} isHead type="INDIVIDUAL" />;
-  }
-  return (
-    <div className="bg-white border border-indigo-100 rounded-xl shadow-sm overflow-hidden">
-      {/* Family header */}
-      <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border-b border-indigo-100">
-        <Users className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-        <span className="text-xs font-bold text-indigo-700 truncate">{reg.representative_name}</span>
-        <span className="ml-auto text-[10px] text-indigo-400 shrink-0">{memberCount + 1} org</span>
-      </div>
-      {/* Members */}
-      <div className="p-2 space-y-1.5">
-        <PassengerCard name={reg.representative_name} isHead />
-        {(reg.family_members ?? []).map((m, i) => (
-          <PassengerCard key={i} name={m.member_name} isHead={false} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Main Component ───────────────────────────────────────────────────────────
+// ── Main Content ─────────────────────────────────────────────────────────────
 export default function AdminTransport() {
   const [loading, setLoading] = useState(true);
-  const [registrants, setRegistrants] = useState<Registrant[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [people, setPeople] = useState<Person[]>([]);
+
+  // UI state
   const [search, setSearch] = useState("");
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"ALL" | TransportMode>("ALL");
+  const [showAddCar, setShowAddCar] = useState(false);
+  const [newCarName, setNewCarName] = useState("");
+  const [newCarCap, setNewCarCap] = useState(4);
+  const [savingCar, setSavingCar] = useState(false);
+
+  // Assignment state
+  const [selectedPerson, setSelectedPerson] = useState<string | null>(null); // Person ID
+  const [movingId, setMovingId] = useState<string | null>(null); // Loading state for move
 
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("registrations")
-      .select(`
-        id, representative_name, type, transport_mode, age_category, status,
-        family_members ( member_name )
-      `)
-      .neq("status", "CANCELLED")
-      .order("representative_name", { ascending: true });
+    try {
+      // 1. Fetch vehicles
+      const { data: vData } = await supabase.from("vehicles").select("*").order("created_at");
+      setVehicles(vData ?? []);
 
-    if (!error) setRegistrants((data as Registrant[]) ?? []);
-    setLoading(false);
-  };
+      // 2. Fetch registrations
+      const { data: rData } = await supabase
+        .from("registrations")
+        .select(`id, representative_name, type, transport_mode, vehicle_id, status, family_members(id, member_name, vehicle_id)`)
+        .neq("status", "CANCELLED")
+        .order("representative_name");
 
-  const exportCSV = () => {
-    // Flatten all registrants into rows
-    const rows: string[][] = [];
-    rows.push(["No", "Nama", "Tipe", "Transportasi", "Anggota Keluarga"]);
-    let no = 1;
-    registrants.forEach(r => {
-      const members = (r.family_members ?? []).map(m => m.member_name).join(" | ");
-      rows.push([
-        String(no++),
-        r.representative_name,
-        r.type === "FAMILY" ? "Keluarga" : "Individu",
-        r.transport_mode === "BUS" ? "Bus Gereja" : "Kendaraan Sendiri",
-        members || "-",
-      ]);
-    });
-    const content = "data:text/csv;charset=utf-8,"
-      + rows.map(r => r.map(c => `"${c}"`).join(",")).join("\n");
-    const a = document.createElement("a");
-    a.href = encodeURI(content);
-    a.download = `transportasi_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-  };
-
-  const toggleTransport = async (id: string, current: TransportMode) => {
-    const next: TransportMode = current === "BUS" ? "OWN" : "BUS";
-    setUpdatingId(id);
-    const { error } = await supabase
-      .from("registrations")
-      .update({ transport_mode: next, updated_at: new Date().toISOString() })
-      .eq("id", id);
-    if (!error) {
-      setRegistrants((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, transport_mode: next } : r))
-      );
+      const arr: Person[] = [];
+      (rData ?? []).forEach(reg => {
+        // Representative
+        arr.push({
+          id: `reg_${reg.id}`,
+          name: reg.representative_name,
+          type: reg.type === "FAMILY" ? "HEAD" : "INDIVIDUAL",
+          reg_id: reg.id,
+          vehicle_id: reg.vehicle_id,
+          transport_mode: reg.transport_mode,
+        });
+        // Family members
+        if (reg.type === "FAMILY" && reg.family_members) {
+          reg.family_members.forEach((fm: any) => {
+            arr.push({
+              id: `fam_${fm.id}`,
+              name: fm.member_name,
+              type: "MEMBER",
+              reg_id: reg.id,
+              vehicle_id: fm.vehicle_id,
+              transport_mode: reg.transport_mode,
+            });
+          });
+        }
+      });
+      setPeople(arr);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-    setUpdatingId(null);
   };
 
-  // Stats
-  const busCount = registrants.reduce((n, r) => {
-    if (r.transport_mode !== "BUS") return n;
-    return n + 1 + (r.type === "FAMILY" ? (r.family_members?.length ?? 0) : 0);
-  }, 0);
-  const ownCount = registrants.reduce((n, r) => {
-    if (r.transport_mode !== "OWN") return n;
-    return n + 1 + (r.type === "FAMILY" ? (r.family_members?.length ?? 0) : 0);
-  }, 0);
-  const busGroups = registrants.filter((r) => r.transport_mode === "BUS").length;
-  const ownGroups = registrants.filter((r) => r.transport_mode === "OWN").length;
+  // Add Car
+  const handleAddCar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCarName.trim() || newCarCap < 1) return;
+    setSavingCar(true);
+    await supabase.from("vehicles").insert({ name: newCarName.trim(), capacity: newCarCap });
+    setSavingCar(false);
+    setNewCarName(""); setShowAddCar(false);
+    fetchData();
+  };
 
-  // Filtered list
-  const filtered = useMemo(() => {
+  const handleDeleteCar = async (id: string, name: string) => {
+    if (!window.confirm(`Hapus mobil ${name}? Semua penumpang di dalamnya akan kembali ke daftar Bus.`)) return;
+    await supabase.from("vehicles").delete().eq("id", id);
+    fetchData();
+  };
+
+  // Move Person to Vehicle (or null for Bus)
+  const assignPerson = async (vehicleId: string | null) => {
+    if (!selectedPerson) return;
+    setMovingId(selectedPerson);
+
+    const isReg = selectedPerson.startsWith("reg_");
+    const dbId = selectedPerson.replace(/^(reg_|fam_)/, "");
+    const table = isReg ? "registrations" : "family_members";
+
+    // Set transport_mode to 'OWN' if assigning to a car, or 'BUS' if kicking out
+    const updates: any = { vehicle_id: vehicleId };
+    if (isReg) updates.transport_mode = vehicleId ? "OWN" : "BUS";
+
+    const { error } = await supabase.from(table).update(updates).eq("id", dbId);
+
+    if (!error) {
+      // Also update local state for immediate feedback
+      setPeople(prev => prev.map(p => {
+        if (p.id === selectedPerson) {
+          return { ...p, vehicle_id: vehicleId, transport_mode: isReg ? (vehicleId ? "OWN" : "BUS") : p.transport_mode };
+        }
+        return p;
+      }));
+    }
+
+    setMovingId(null);
+    setSelectedPerson(null); // deselect after move
+  };
+
+  // Memoized groupings
+  const { unassignedBus, assignedCars } = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return registrants.filter((r) => {
-      const matchMode = activeTab === "ALL" || r.transport_mode === activeTab;
-      const matchSearch =
-        !q ||
-        r.representative_name.toLowerCase().includes(q) ||
-        (r.family_members ?? []).some((m) => m.member_name.toLowerCase().includes(q));
-      return matchMode && matchSearch;
-    });
-  }, [registrants, search, activeTab]);
+    // Unassigned = no vehicle_id. We'll show all of them here (since transport_mode default is BUS).
+    const un = people.filter(p => !p.vehicle_id && (!q || p.name.toLowerCase().includes(q)));
+    
+    // Group assigned by vehicle
+    const cars = vehicles.map(v => ({
+      ...v,
+      // passengers in this car matching search
+      passengers: people.filter(p => p.vehicle_id === v.id && (!q || p.name.toLowerCase().includes(q))),
+      // total actual passengers in this car regardless of search
+      totalPassengers: people.filter(p => p.vehicle_id === v.id).length, 
+    }));
 
-  const busFiltered = filtered.filter((r) => r.transport_mode === "BUS");
-  const ownFiltered = filtered.filter((r) => r.transport_mode === "OWN");
+    return { unassignedBus: un, assignedCars: cars };
+  }, [people, vehicles, search]);
 
   return (
-    <div className="space-y-5">
-      {/* ── Header ── */}
+    <div className="space-y-6">
+      {/* ── HEADER ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <Bus className="h-6 w-6 text-blue-600" /> Manajemen Transportasi
+            <Car className="h-6 w-6 text-amber-500" /> Penataan Kendaraan
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Atur pilihan transportasi tiap pendaftar ke lokasi gathering.
+            Kelompokkan jemaat ke dalam mobil, atau biarkan di Bus Gereja.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={exportCSV}
-            className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm"
-          >
-            <FileSpreadsheet className="h-4 w-4" /><span className="hidden sm:inline">Export CSV</span>
+        <div className="flex gap-2">
+          <button onClick={() => setShowAddCar(true)}
+            className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-lg font-medium text-sm transition-colors">
+            <Plus className="h-4 w-4" /> Tambah Mobil
           </button>
-          <button
-            onClick={fetchData}
-            className="inline-flex items-center gap-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 px-3 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm"
-          >
+          <button onClick={fetchData}
+            className="inline-flex items-center gap-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 px-3 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm">
             <RefreshCw className="h-4 w-4" /> Refresh
           </button>
         </div>
       </div>
 
-      {/* ── Summary cards ── */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4">
-        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 sm:p-5 flex items-center gap-4">
-          <div className="p-3 bg-blue-100 text-blue-600 rounded-xl shrink-0">
-            <Bus className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Bus Gereja</p>
-            <p className="text-3xl font-bold text-blue-900">{busCount}</p>
-            <p className="text-xs text-blue-400 mt-0.5">{busGroups} keluarga/individu</p>
-          </div>
-        </div>
-        <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 sm:p-5 flex items-center gap-4">
-          <div className="p-3 bg-amber-100 text-amber-600 rounded-xl shrink-0">
-            <Car className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide">Kendaraan Sendiri</p>
-            <p className="text-3xl font-bold text-amber-900">{ownCount}</p>
-            <p className="text-xs text-amber-400 mt-0.5">{ownGroups} keluarga/individu</p>
-          </div>
+      {/* ── SEARCH & INSTRUCTIONS ── */}
+      <div className="bg-white border text-sm border-slate-200 rounded-xl shadow-sm p-3 relative flex items-center gap-3">
+        <Search className="h-4 w-4 text-slate-400 shrink-0 ml-1" />
+        <input type="text" placeholder="Cari nama peserta..." value={search} onChange={e => setSearch(e.target.value)}
+          className="flex-1 outline-none text-slate-700 bg-transparent" />
+        
+        <div className="hidden md:flex border-l border-slate-200 pl-4 items-center gap-2 text-slate-500 text-xs">
+          <CheckCircle2 className="h-3.5 w-3.5 text-blue-500" />
+          Klik nama peserta, lalu klik mobil tujuan untuk memindahkannya.
         </div>
       </div>
 
-      {/* ── Search + Filter tab ── */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Cari nama atau anggota keluarga..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white shadow-sm"
-          />
-        </div>
-        <div className="inline-flex rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-          {(["ALL", "BUS", "OWN"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setActiveTab(t)}
-              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors border-r last:border-r-0 border-slate-200 ${
-                activeTab === t
-                  ? "bg-blue-600 text-white"
-                  : "text-slate-600 hover:bg-slate-50"
-              }`}
-            >
-              {t === "ALL" && "Semua"}
-              {t === "BUS" && <><Bus className="h-4 w-4" /> Bus</>}
-              {t === "OWN" && <><Car className="h-4 w-4" /> Sendiri</>}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Loading ── */}
       {loading && (
-        <div className="flex justify-center py-16">
-          <Loader2 className="h-7 w-7 animate-spin text-blue-500" />
+        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-blue-500" /></div>
+      )}
+
+      {/* ── TWO-COLUMN DRAG/DROP LAYOUT ── */}
+      {!loading && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          {/* LEFT: Unassigned (Bus) */}
+          <div className="lg:col-span-4 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col h-[600px]">
+            <div className="bg-slate-50 border-b border-slate-100 p-4 sticky top-0 z-10 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Bus className="h-5 w-5 text-blue-600" />
+                <h2 className="font-bold text-slate-800">Bus / Belum Diatur</h2>
+              </div>
+              <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                {unassignedBus.length}
+              </span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3 space-y-2 relative">
+              {movingId && selectedPerson && !unassignedBus.find(p=>p.id === movingId) && (
+                <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-20" />
+              )}
+              {unassignedBus.map(p => (
+                <PersonItem 
+                  key={p.id} p={p} 
+                  active={selectedPerson === p.id}
+                  onClick={() => setSelectedPerson(p.id === selectedPerson ? null : p.id)}
+                  actionIcon={selectedPerson === p.id ? ArrowRightLeft : ChevronRight}
+                />
+              ))}
+              {unassignedBus.length === 0 && (
+                <div className="text-center py-10 text-xs text-slate-400">Kosong</div>
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT: Vehicles Grid */}
+          <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {assignedCars.map(car => {
+              const isFull = car.totalPassengers >= car.capacity;
+              return (
+                <div key={car.id} className={`rounded-2xl border bg-white shadow-sm flex flex-col transition-all ${selectedPerson ? "ring-2 ring-indigo-500/50 hover:ring-indigo-500 ring-offset-2 cursor-pointer" : "border-slate-200"}`}
+                     onClick={() => {
+                        if (selectedPerson) assignPerson(car.id);
+                     }}>
+                  
+                  {/* Car Header */}
+                  <div className={`p-3 border-b flex items-start justify-between ${selectedPerson ? "bg-indigo-50 border-indigo-100" : "bg-slate-50 border-slate-100 rounded-t-2xl"}`}>
+                    <div className="flex items-center gap-2 text-slate-800">
+                      <Car className={`h-4 w-4 ${selectedPerson ? "text-indigo-600" : "text-amber-500"}`} />
+                      <div className="min-w-0">
+                        <p className="font-bold text-sm truncate pr-2">{car.name}</p>
+                        <p className="text-[10px] text-slate-500">{car.totalPassengers} / {car.capacity} kursi</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${isFull ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-700"}`}>
+                        {isFull ? "Penuh" : `${car.capacity - car.totalPassengers} sisa`}
+                      </span>
+                      {!selectedPerson && (
+                        <button onClick={(e) => { e.stopPropagation(); handleDeleteCar(car.id, car.name); }} 
+                          className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-red-600 transition-colors">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Car Passengers */}
+                  <div className="p-2 space-y-1.5 min-h-[120px]">
+                    {car.passengers.map(p => (
+                      <div key={p.id} className="relative group">
+                        <PersonItem p={p} onClick={() => setSelectedPerson(p.id === selectedPerson ? null : p.id)} active={selectedPerson === p.id} />
+                        {/* Kick out button (only visible on hover, drops passenger back to bus) */}
+                        {!selectedPerson && (
+                          <button onClick={(e) => { e.stopPropagation(); setSelectedPerson(p.id); assignPerson(null); }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 bg-white text-slate-400 hover:text-red-500 rounded opacity-0 group-hover:opacity-100 transition-opacity shadow-sm border border-slate-200">
+                            <XCircle className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {car.totalPassengers === 0 && (
+                      <div className="h-full flex items-center justify-center text-xs text-slate-400 py-6 italic">Kosong</div>
+                    )}
+                    {selectedPerson && !isFull && !car.passengers.find(p=>p.id===selectedPerson) && (
+                      <div className="border border-indigo-200 border-dashed rounded-lg bg-indigo-50/50 p-2 text-center text-xs text-indigo-400 font-medium py-3">
+                        Klik untuk memasukkan {people.find(p=>p.id===selectedPerson)?.name}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Empty State for Cars */}
+            {!loading && assignedCars.length === 0 && (
+              <div className="sm:col-span-2 xl:col-span-3 bg-white border border-dashed border-slate-300 rounded-2xl py-16 flex flex-col items-center justify-center text-slate-400 space-y-3">
+                <Car className="h-8 w-8 text-slate-300" />
+                <p className="text-sm">Belum ada mobil yang ditambahkan.</p>
+                <button onClick={() => setShowAddCar(true)} className="text-amber-600 font-medium text-sm hover:underline mt-2">Tambah Mobil Baru</button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      {/* ── Content: two-column or single ── */}
-      {!loading && (
-        <div className={`grid gap-5 ${activeTab === "ALL" ? "lg:grid-cols-2" : "grid-cols-1"}`}>
-
-          {/* BUS SECTION */}
-          {(activeTab === "ALL" || activeTab === "BUS") && (
-            <div className="space-y-3">
-              {/* Section header */}
-              <div className="flex items-center gap-2 px-1">
-                <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg">
-                  <Bus className="h-4 w-4" />
-                </div>
-                <h2 className="font-bold text-slate-800">Bus Gereja</h2>
-                <span className="ml-1 inline-flex items-center justify-center bg-blue-600 text-white text-xs font-bold rounded-full w-5 h-5">
-                  {busCount}
-                </span>
-                <span className="text-xs text-slate-400 ml-1">penumpang</span>
-              </div>
-
-              {busFiltered.length === 0 ? (
-                <div className="bg-white border border-dashed border-slate-200 rounded-2xl py-10 text-center text-slate-400 text-sm">
-                  Tidak ada pendaftar Bus.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {busFiltered.map((reg) => (
-                    <div key={reg.id} className="relative group">
-                      <GroupCard reg={reg} />
-                      {/* Toggle button */}
-                      <button
-                        onClick={() => toggleTransport(reg.id, reg.transport_mode)}
-                        disabled={updatingId === reg.id}
-                        title="Pindah ke Kendaraan Sendiri"
-                        className="absolute top-2 right-2 p-1 rounded-md bg-white/80 border border-slate-200 text-slate-400 hover:text-amber-600 hover:border-amber-300 hover:bg-amber-50 opacity-0 group-hover:opacity-100 transition-all shadow-sm disabled:opacity-50"
-                      >
-                        {updatingId === reg.id
-                          ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          : <Car className="h-3.5 w-3.5" />}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+      {/* ── ADD CAR MODAL ── */}
+      {showAddCar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 bg-slate-50">
+              <h2 className="font-bold text-slate-800 text-sm">Tambah Mobil</h2>
+              <button onClick={() => setShowAddCar(false)} className="text-slate-400 hover:text-slate-600"><X className="h-4 w-4" /></button>
             </div>
-          )}
-
-          {/* OWN VEHICLE SECTION */}
-          {(activeTab === "ALL" || activeTab === "OWN") && (
-            <div className="space-y-3">
-              {/* Section header */}
-              <div className="flex items-center gap-2 px-1">
-                <div className="p-1.5 bg-amber-100 text-amber-600 rounded-lg">
-                  <Car className="h-4 w-4" />
-                </div>
-                <h2 className="font-bold text-slate-800">Kendaraan Sendiri</h2>
-                <span className="ml-1 inline-flex items-center justify-center bg-amber-500 text-white text-xs font-bold rounded-full w-5 h-5">
-                  {ownCount}
-                </span>
-                <span className="text-xs text-slate-400 ml-1">orang</span>
+            <form onSubmit={handleAddCar} className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Nama/Info Mobil</label>
+                <input type="text" autoFocus required value={newCarName} onChange={e => setNewCarName(e.target.value)}
+                  placeholder="Misal: Mobil Pak Budi"
+                  className="w-full text-sm border-slate-300 rounded-lg focus:ring-amber-500 focus:border-amber-500" />
               </div>
-
-              {ownFiltered.length === 0 ? (
-                <div className="bg-white border border-dashed border-slate-200 rounded-2xl py-10 text-center text-slate-400 text-sm">
-                  Tidak ada pendaftar kendaraan sendiri.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {ownFiltered.map((reg) => (
-                    <div key={reg.id} className="relative group">
-                      <GroupCard reg={reg} />
-                      {/* Toggle button */}
-                      <button
-                        onClick={() => toggleTransport(reg.id, reg.transport_mode)}
-                        disabled={updatingId === reg.id}
-                        title="Pindah ke Bus Gereja"
-                        className="absolute top-2 right-2 p-1 rounded-md bg-white/80 border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 opacity-0 group-hover:opacity-100 transition-all shadow-sm disabled:opacity-50"
-                      >
-                        {updatingId === reg.id
-                          ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          : <Bus className="h-3.5 w-3.5" />}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Legend ── */}
-      {!loading && (
-        <div className="flex flex-wrap gap-4 text-xs text-slate-500 pt-1">
-          <span className="flex items-center gap-1.5">
-            <Users className="h-3.5 w-3.5 text-indigo-400" /> = Kepala Keluarga
-          </span>
-          <span className="flex items-center gap-1.5">
-            <User className="h-3.5 w-3.5 text-slate-400" /> = Individu
-          </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-            Hover kartu → ikon pindah mode
-          </span>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Kapasitas Penumpang</label>
+                <input type="number" required min={1} max={15} value={newCarCap} onChange={e => setNewCarCap(Number(e.target.value))}
+                  className="w-full text-sm border-slate-300 rounded-lg focus:ring-amber-500 focus:border-amber-500" />
+              </div>
+              <button type="submit" disabled={savingCar}
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white font-medium py-2 rounded-xl text-sm transition-colors flex justify-center items-center">
+                {savingCar ? <Loader2 className="h-4 w-4 animate-spin" /> : "Simpan Mobil"}
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </div>
