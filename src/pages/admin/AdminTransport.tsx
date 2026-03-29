@@ -81,8 +81,8 @@ export default function AdminTransport() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch vehicles
-      const { data: vData } = await supabase.from("vehicles").select("*").order("created_at");
+      // 1. Fetch vehicles (newest first)
+      const { data: vData } = await supabase.from("vehicles").select("*").order("created_at", { ascending: false });
       setVehicles(vData ?? []);
 
       // 2. Fetch registrations
@@ -174,14 +174,27 @@ export default function AdminTransport() {
   // Memoized groupings
   const { unassignedBus, assignedCars } = useMemo(() => {
     const q = search.toLowerCase().trim();
-    // Unassigned = no vehicle_id. We'll show all of them here (since transport_mode default is BUS).
-    const un = people.filter(p => !p.vehicle_id && (!q || p.name.toLowerCase().includes(q)));
+    
+    // Temukan semua reg_id yang cocok dengan pencarian (baik itu kepala atau anggota)
+    const matchedRegIds = new Set<string>();
+    if (q) {
+      people.forEach(p => {
+        if (p.name.toLowerCase().includes(q)) {
+          matchedRegIds.add(p.reg_id);
+        }
+      });
+    }
+
+    // Fungsi filter: masukkan true jika cari kosong ATAU reg_id-nya ada di matchedRegIds
+    const isMatch = (p: Person) => !q || matchedRegIds.has(p.reg_id);
+
+    // Unassigned = no vehicle_id.
+    const un = people.filter(p => !p.vehicle_id && isMatch(p));
     
     // Group assigned by vehicle
     const cars = vehicles.map(v => ({
       ...v,
-      // passengers in this car matching search
-      passengers: people.filter(p => p.vehicle_id === v.id && (!q || p.name.toLowerCase().includes(q))),
+      passengers: people.filter(p => p.vehicle_id === v.id && isMatch(p)),
       // total actual passengers in this car regardless of search
       totalPassengers: people.filter(p => p.vehicle_id === v.id).length, 
     }));
