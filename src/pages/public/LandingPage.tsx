@@ -6,6 +6,8 @@ import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
+  BusFront,
 } from "lucide-react";
 
 const CAROUSEL_IMAGES = [
@@ -198,6 +200,25 @@ export default function LandingPage() {
       </div>
 
       <DaftarSekarangComp />
+
+      {/* Secondary Actions for Existing Participants */}
+      <div className="w-full max-w-5xl px-4 mt-8">
+        <div className="bg-slate-100 rounded-3xl p-6 sm:p-10 text-center border border-slate-200">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-2">Sudah Mendaftar?</h2>
+          <p className="text-slate-500 text-sm sm:text-base max-w-xl mx-auto mb-6">Pakai layanan mandiri di bawah ini untuk mengecek status pendaftaran dan pembagian kendaraan Anda.</p>
+          
+          <div className="flex flex-col sm:flex-row justify-center gap-4 max-w-2xl mx-auto">
+            <Link to="/status" className="flex-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 px-5 py-4 rounded-2xl font-semibold transition-all shadow-sm hover:shadow flex items-center justify-center gap-3 group">
+              <div className="bg-indigo-50 text-indigo-600 p-2 rounded-xl group-hover:scale-110 transition-transform"><ClipboardList className="h-5 w-5" /></div>
+              Cek Status Pendaftaran
+            </Link>
+            <Link to="/transport" className="flex-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 px-5 py-4 rounded-2xl font-semibold transition-all shadow-sm hover:shadow flex items-center justify-center gap-3 group">
+              <div className="bg-amber-50 text-amber-600 p-2 rounded-xl group-hover:scale-110 transition-transform"><BusFront className="h-5 w-5" /></div>
+              Cek Mobil/Bus Anda
+            </Link>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import LandingPage from "./pages/public/LandingPage";
 import RegistrationPage from "./pages/public/RegistrationPage";
 import RegistrationSuccess from "./pages/public/RegistrationSuccess";
 import StatusCheckPage from "./pages/public/StatusCheckPage";
+import CheckTransport from "./pages/CheckTransport";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminRegistrations from "./pages/admin/AdminRegistrations";
@@ -26,6 +27,7 @@ export default function AppRoutes() {
           <Route path="/success/:id" element={<RegistrationSuccess />} />
           <Route path="/status" element={<StatusCheckPage />} />
           <Route path="/status/:id" element={<StatusCheckPage />} />
+          <Route path="/transport" element={<CheckTransport />} />
         </Route>
 
         {/* Admin Routes */}
