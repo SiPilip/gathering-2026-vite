@@ -8,6 +8,7 @@ import {
   Loader2,
   Menu,
   X,
+  ClipboardList,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
@@ -20,6 +21,12 @@ const NAV_LINKS = [
     exact: false,
     match: (p: string) =>
       p.startsWith("/admin/registrations") || p.startsWith("/admin/payments"),
+  },
+  {
+    to: "/admin/participants",
+    label: "Daftar Peserta",
+    icon: ClipboardList,
+    exact: false,
   },
   {
     to: "/admin/registrations/new",
