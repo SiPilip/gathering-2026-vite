@@ -1,15 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
-import {
-  Users,
-  User,
-  CreditCard,
-  Wallet,
-  TrendingUp,
-  Loader2,
-  Shirt,
-  UserCheck,
-} from "lucide-react";
+import { Users, User, CreditCard, Wallet, TrendingUp, Loader2, Shirt, UserCheck, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const SHIRT_LABEL: Record<string, string> = {
@@ -48,6 +39,8 @@ export default function AdminDashboard() {
     shirtSizes: {} as Record<string, number>,
     ageCategories: { ADULT: 0, YOUTH: 0, CHILD: 0 },
     regTypes: { FAMILY: 0, INDIVIDUAL: 0 },
+    totalDonations: 0,
+    donorCount: 0,
   });
 
   useEffect(() => {
@@ -67,6 +60,11 @@ export default function AdminDashboard() {
         .order("created_at", { ascending: false });
 
       if (regError) throw regError;
+
+      // Donors
+      const { data: donorData } = await supabase.from("donors").select("amount");
+      const totalDonations = (donorData ?? []).reduce((s: number, d: any) => s + Number(d.amount), 0);
+      const donorCount = donorData?.length ?? 0;
 
       // Get all family members shirt sizes + age category
       const { data: famData } = await supabase
@@ -113,6 +111,8 @@ export default function AdminDashboard() {
         shirtSizes,
         ageCategories,
         regTypes,
+        totalDonations,
+        donorCount,
       });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -237,6 +237,21 @@ export default function AdminDashboard() {
             <p className="text-xs text-slate-400 mt-0.5">Org × Rp 200.000</p>
           </div>
         </div>
+      </div>
+
+      {/* Donation card */}
+      <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4 sm:p-5 flex items-center gap-4 shadow-sm">
+        <div className="p-3 bg-rose-100 text-rose-600 rounded-xl shrink-0">
+          <Heart className="h-6 w-6" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-rose-600">Total Donasi</p>
+          <p className="text-2xl font-bold text-rose-700">{formatCurrency(stats.totalDonations)}</p>
+          <p className="text-xs text-rose-400 mt-0.5">{stats.donorCount} donatur</p>
+        </div>
+        <Link to="/admin/donors" className="text-xs font-semibold text-rose-500 hover:text-rose-700 whitespace-nowrap transition-colors">
+          Kelola →
+        </Link>
       </div>
 
       {/* Age Category Recap */}

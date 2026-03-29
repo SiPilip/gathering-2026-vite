@@ -471,7 +471,7 @@ export default function AdminParticipantList() {
                                 <span className="shrink-0 w-3 h-3 rounded-full border-2 border-slate-300 ml-2" />
                               )}
                               {row.isHead && row.groupType === "FAMILY" && (
-                                <Users className="h-4 w-4 text-indigo-400 shrink-0" title="Kepala Keluarga" />
+                                <Users className="h-4 w-4 text-indigo-400 shrink-0" />
                               )}
                               {row.groupType === "INDIVIDUAL" && (
                                 <User className="h-4 w-4 text-slate-400 shrink-0" />

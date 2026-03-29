@@ -9,6 +9,7 @@ import {
   Menu,
   X,
   ClipboardList,
+  Heart,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
@@ -26,6 +27,12 @@ const NAV_LINKS = [
     to: "/admin/participants",
     label: "Daftar Peserta",
     icon: ClipboardList,
+    exact: false,
+  },
+  {
+    to: "/admin/donors",
+    label: "Donatur",
+    icon: Heart,
     exact: false,
   },
   {
