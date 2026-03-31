@@ -74,7 +74,7 @@ export default function AdminRooms() {
   const [nrName, setNrName] = useState("");
   const [nrBuilding, setNrBuilding] = useState("Boni");
   const [nrFloor, setNrFloor] = useState("Atas");
-  const [nrCap, setNrCap] = useState(4);
+  const [nrCap, setNrCap] = useState(8);
   const [savingRoom, setSavingRoom] = useState(false);
 
   // Assignment state
