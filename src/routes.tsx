@@ -15,6 +15,8 @@ import AdminEditRegistration from "./pages/admin/AdminEditRegistration";
 import AdminParticipantList from "./pages/admin/AdminParticipantList";
 import AdminDonors from "./pages/admin/AdminDonors";
 import AdminTransport from "./pages/admin/AdminTransport";
+import AdminRooms from "./pages/admin/AdminRooms";
+import CheckRoom from "./pages/CheckRoom";
 
 export default function AppRoutes() {
   return (
@@ -28,6 +30,7 @@ export default function AppRoutes() {
           <Route path="/status" element={<StatusCheckPage />} />
           <Route path="/status/:id" element={<StatusCheckPage />} />
           <Route path="/transport" element={<CheckTransport />} />
+          <Route path="/room" element={<CheckRoom />} />
         </Route>
 
         {/* Admin Routes */}
@@ -41,6 +44,7 @@ export default function AppRoutes() {
           <Route path="donors" element={<AdminDonors />} />
           <Route path="transport" element={<AdminTransport />} />
           <Route path="payments/:id" element={<AdminPayments />} />
+          <Route path="room" element={<AdminRooms />} />
         </Route>
       </Routes>
     </BrowserRouter>

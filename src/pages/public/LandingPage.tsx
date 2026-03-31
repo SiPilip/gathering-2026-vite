@@ -8,6 +8,7 @@ import {
   ChevronRight,
   ClipboardList,
   BusFront,
+  BedDouble,
 } from "lucide-react";
 
 const CAROUSEL_IMAGES = [
@@ -207,14 +208,18 @@ export default function LandingPage() {
           <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-2">Sudah Mendaftar?</h2>
           <p className="text-slate-500 text-sm sm:text-base max-w-xl mx-auto mb-6">Pakai layanan mandiri di bawah ini untuk mengecek status pendaftaran dan pembagian kendaraan Anda.</p>
           
-          <div className="flex flex-col sm:flex-row justify-center gap-4 max-w-2xl mx-auto">
-            <Link to="/status" className="flex-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 px-5 py-4 rounded-2xl font-semibold transition-all shadow-sm hover:shadow flex items-center justify-center gap-3 group">
+          <div className="flex flex-col sm:flex-row justify-center gap-4 max-w-4xl mx-auto">
+            <Link to="/status" className="flex-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 px-4 py-4 rounded-2xl font-semibold transition-all shadow-sm hover:shadow flex items-center justify-center gap-3 group text-sm sm:text-base">
               <div className="bg-indigo-50 text-indigo-600 p-2 rounded-xl group-hover:scale-110 transition-transform"><ClipboardList className="h-5 w-5" /></div>
               Cek Status Pendaftaran
             </Link>
-            <Link to="/transport" className="flex-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 px-5 py-4 rounded-2xl font-semibold transition-all shadow-sm hover:shadow flex items-center justify-center gap-3 group">
+            <Link to="/transport" className="flex-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 px-4 py-4 rounded-2xl font-semibold transition-all shadow-sm hover:shadow flex items-center justify-center gap-3 group text-sm sm:text-base">
               <div className="bg-amber-50 text-amber-600 p-2 rounded-xl group-hover:scale-110 transition-transform"><BusFront className="h-5 w-5" /></div>
               Cek Mobil/Bus Anda
+            </Link>
+            <Link to="/room" className="flex-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 px-4 py-4 rounded-2xl font-semibold transition-all shadow-sm hover:shadow flex items-center justify-center gap-3 group text-sm sm:text-base">
+              <div className="bg-sky-50 text-sky-600 p-2 rounded-xl group-hover:scale-110 transition-transform"><BedDouble className="h-5 w-5" /></div>
+              Cek Kamar Asrama
             </Link>
           </div>
         </div>

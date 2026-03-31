@@ -11,6 +11,7 @@ import {
   ClipboardList,
   Heart,
   Bus,
+  BedDouble,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
@@ -40,6 +41,12 @@ const NAV_LINKS = [
     to: "/admin/transport",
     label: "Transportasi",
     icon: Bus,
+    exact: false,
+  },
+  {
+    to: "/admin/room",
+    label: "Akomodasi",
+    icon: BedDouble,
     exact: false,
   },
   {
