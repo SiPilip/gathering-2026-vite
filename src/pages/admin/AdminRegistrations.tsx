@@ -155,18 +155,39 @@ export default function AdminRegistrations() {
   const copyVisibleNames = () => {
     if (filteredData.length === 0) return alert("Tidak ada data untuk disalin.");
     
-    let text = "Daftar Nama:\n";
-    filteredData.forEach((r, idx) => {
-      text += `${idx + 1}. ${r.representative_name}`;
-      if (r.type === "FAMILY" && r.family_members?.length > 0) {
-        text += ` (Keluarga: +${r.family_members.length} org)`;
-      } else if (r.type === "INDIVIDUAL") {
-        text += ` (Individu)`;
-      }
-      text += ` - ${getStatusBadge(r.status).props.children}\n`;
-    });
+    const paid = filteredData.filter(r => r.status === "FULLY_PAID");
+    const unpaid = filteredData.filter(r => r.status !== "FULLY_PAID");
 
-    navigator.clipboard.writeText(text).then(() => {
+    let text = "";
+
+    if (paid.length > 0) {
+      text += "✅ LUNAS:\n";
+      paid.forEach((r, idx) => {
+        text += `${idx + 1}. ${r.representative_name}`;
+        if (r.type === "FAMILY" && r.family_members?.length > 0) text += ` (+${r.family_members.length} org)`;
+        else if (r.type === "INDIVIDUAL") text += ` (Individu)`;
+        text += "\n";
+      });
+      text += "\n";
+    }
+
+    if (unpaid.length > 0) {
+      text += "⏳ BELUM LUNAS / ANGSURAN:\n";
+      unpaid.forEach((r, idx) => {
+        text += `${idx + 1}. ${r.representative_name}`;
+        if (r.type === "FAMILY" && r.family_members?.length > 0) text += ` (+${r.family_members.length} org)`;
+        else if (r.type === "INDIVIDUAL") text += ` (Individu)`;
+        
+        let statusText = "Belum Bayar";
+        if (r.status === "PARTIAL_PAID") statusText = "Angsuran";
+        if (r.status === "CANCELLED") statusText = "Batal";
+
+        text += ` - ${statusText}\n`;
+      });
+      text += "\n";
+    }
+
+    navigator.clipboard.writeText(text.trim()).then(() => {
       alert("Daftar nama berhasil disalin ke clipboard!");
     }).catch(err => {
       console.error("Gagal menyalin: ", err);
