@@ -8,6 +8,7 @@ import {
   Eye,
   UserPlus,
   Pencil,
+  Copy,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -151,6 +152,28 @@ export default function AdminRegistrations() {
     document.body.removeChild(link);
   };
 
+  const copyVisibleNames = () => {
+    if (filteredData.length === 0) return alert("Tidak ada data untuk disalin.");
+    
+    let text = "Daftar Nama:\n";
+    filteredData.forEach((r, idx) => {
+      text += `${idx + 1}. ${r.representative_name}`;
+      if (r.type === "FAMILY" && r.family_members?.length > 0) {
+        text += ` (Keluarga: +${r.family_members.length} org)`;
+      } else if (r.type === "INDIVIDUAL") {
+        text += ` (Individu)`;
+      }
+      text += ` - ${getStatusBadge(r.status).props.children}\n`;
+    });
+
+    navigator.clipboard.writeText(text).then(() => {
+      alert("Daftar nama berhasil disalin ke clipboard!");
+    }).catch(err => {
+      console.error("Gagal menyalin: ", err);
+      alert("Gagal menyalin teks.");
+    });
+  };
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -165,6 +188,14 @@ export default function AdminRegistrations() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={copyVisibleNames}
+            title="Salin Data yang Tampil"
+            className="inline-flex items-center gap-1.5 bg-slate-100 border border-slate-300 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-medium transition-colors text-sm"
+          >
+            <Copy className="h-4 w-4" />
+            <span className="hidden sm:inline">Salin Nama</span>
+          </button>
           <button
             onClick={exportToCSV}
             className="inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg font-medium transition-colors text-sm"

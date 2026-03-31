@@ -336,8 +336,11 @@ export default function AdminPayments() {
               </h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Nominal (Rp)
+                  <label className="flex items-center justify-between text-sm font-medium text-slate-700 mb-1">
+                    <span>Nominal (Rp)</span>
+                    <button type="button" onClick={() => setPaymentAmount(remaining.toString())} className="text-xs text-blue-600 hover:underline font-semibold flex items-center gap-1">
+                      Set Lunas
+                    </button>
                   </label>
                   <input
                     type="number"

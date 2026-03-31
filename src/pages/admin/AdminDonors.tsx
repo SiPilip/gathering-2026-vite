@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import {
   Loader2, Plus, Trash2, Pencil, X, Check,
-  Heart, Search, FileSpreadsheet, Calendar, StickyNote,
+  Heart, Search, FileSpreadsheet, Calendar, StickyNote, Copy
 } from "lucide-react";
 
 interface Donor {
@@ -113,6 +113,27 @@ export default function AdminDonors() {
     a.click();
   };
 
+  const copyDonors = () => {
+    if (filtered.length === 0) return alert("Tidak ada data untuk disalin.");
+    let text = "Daftar Donatur:\n";
+    filtered.forEach((d, idx) => {
+      text += `${idx + 1}. ${d.name} - ${formatCurrency(d.amount)}`;
+      if (d.notes) text += ` (${d.notes})`;
+      text += "\n";
+    });
+    
+    // Total calculation for the filtered items
+    const totalFiltered = filtered.reduce((s, d) => s + Number(d.amount), 0);
+    text += `\nTotal Donasi: ${formatCurrency(totalFiltered)}`;
+    
+    navigator.clipboard.writeText(text).then(() => {
+      alert("Daftar donatur berhasil disalin ke clipboard!");
+    }).catch(err => {
+      console.error("Gagal menyalin: ", err);
+      alert("Gagal menyalin teks.");
+    });
+  };
+
   const filtered = donors.filter(d =>
     !search.trim() || d.name.toLowerCase().includes(search.toLowerCase())
   );
@@ -130,6 +151,10 @@ export default function AdminDonors() {
           <p className="text-sm text-slate-500 mt-0.5">Kelola data donasi gathering gereja.</p>
         </div>
         <div className="flex items-center gap-2">
+          <button onClick={copyDonors} title="Salin Data yang Tampil"
+            className="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 px-3 py-2 rounded-lg font-medium text-sm transition-colors">
+            <Copy className="h-4 w-4" /><span className="hidden sm:inline">Salin Data</span>
+          </button>
           <button onClick={exportCSV}
             className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg font-medium text-sm transition-colors">
             <FileSpreadsheet className="h-4 w-4" /><span className="hidden sm:inline">Export CSV</span>
