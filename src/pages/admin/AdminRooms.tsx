@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "../../lib/supabase";
 import {
   Loader2, Search, BedDouble, Building, Plus, Trash2, X,
-  RefreshCw, CheckCircle2, ChevronRight, XCircle, ArrowRightLeft, Printer,
+  RefreshCw, CheckCircle2, ChevronRight, XCircle, ArrowRightLeft, Printer, Copy
 } from "lucide-react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -249,6 +249,42 @@ export default function AdminRooms() {
     return sortedGroups;
   }, [assignedRooms]);
 
+  const copyToClipboard = () => {
+    let text = "📋 REKAP AKOMODASI (KAMAR)\n\n";
+
+    if (unassignedItems.length > 0) {
+      text += `❗️ BELUM DAPAT KAMAR (${unassignedItems.length} orang):\n`;
+      unassignedItems.forEach((p, i) => {
+        const typeStr = p.type === "HEAD" ? "Kepala Kel." : (p.type === "MEMBER" ? "Anggota" : "Individu");
+        text += `${i + 1}. ${p.name} (${typeStr})\n`;
+      });
+      text += "\n";
+    }
+
+    groupedRooms.forEach(group => {
+      text += `🏢 GEDUNG ${group.title.toUpperCase()}\n`;
+      group.rooms.forEach(rm => {
+        text += `\n🛏️ KAMAR: ${rm.name} (${rm.totalPassengers}/${rm.capacity} isi):\n`;
+        if (rm.passengers.length === 0) {
+          text += "- Kosong -\n";
+        } else {
+          rm.passengers.forEach((p, i) => {
+            const typeStr = p.type === "HEAD" ? "Kepala Kel." : (p.type === "MEMBER" ? "Anggota" : "Individu");
+            text += `${i + 1}. ${p.name} (${typeStr})\n`;
+          });
+        }
+      });
+      text += "\n-----------------------\n\n";
+    });
+
+    navigator.clipboard.writeText(text.trim()).then(() => {
+      alert("Data akomodasi kamar berhasil disalin ke clipboard!");
+    }).catch(err => {
+      console.error("Gagal menyalin: ", err);
+      alert("Gagal menyalin teks.");
+    });
+  };
+
   return (
     <div className="space-y-6 pb-20">
       
@@ -262,7 +298,11 @@ export default function AdminRooms() {
             Atur asrama dan teman sekamar jemaat untuk penginapan.
           </p>
         </div>
-        <div className="flex gap-2 print:hidden">
+        <div className="flex flex-wrap gap-2 print:hidden">
+          <button onClick={copyToClipboard}
+            className="inline-flex items-center gap-1.5 bg-slate-100 border border-slate-300 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm">
+            <Copy className="h-4 w-4" /> Salin Data
+          </button>
           <button onClick={() => window.print()}
             className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm">
             <Printer className="h-4 w-4" /> Cetak PDF

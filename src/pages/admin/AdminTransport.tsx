@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "../../lib/supabase";
 import {
   Loader2, Search, Bus, Car, Plus, Trash2, X,
-  RefreshCw, CheckCircle2, ChevronRight, XCircle, ArrowRightLeft, Printer,
+  RefreshCw, CheckCircle2, ChevronRight, XCircle, ArrowRightLeft, Printer, Copy
 } from "lucide-react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -218,6 +218,39 @@ export default function AdminTransport() {
     return { unassignedBus: un, assignedCars: cars };
   }, [people, vehicles, search]);
 
+  const copyToClipboard = () => {
+    let text = "📋 REKAP TRANSPORTASI\n\n";
+
+    if (unassignedBus.length > 0) {
+      text += `🚌 BUS GEREJA / BELUM DIATUR (${unassignedBus.length} orang):\n`;
+      unassignedBus.forEach((p, i) => {
+        const typeStr = p.type === "HEAD" ? "Kepala Kel." : (p.type === "MEMBER" ? "Anggota" : "Individu");
+        text += `${i + 1}. ${p.name} (${typeStr})\n`;
+      });
+      text += "\n";
+    }
+
+    assignedCars.forEach(car => {
+      text += `🚗 MOBIL: ${car.name.toUpperCase()} (${car.totalPassengers}/${car.capacity} isi):\n`;
+      if (car.passengers.length === 0) {
+        text += "- Kosong -\n";
+      } else {
+        car.passengers.forEach((p, i) => {
+          const typeStr = p.type === "HEAD" ? "Kepala Kel." : (p.type === "MEMBER" ? "Anggota" : "Individu");
+          text += `${i + 1}. ${p.name} (${typeStr})\n`;
+        });
+      }
+      text += "\n";
+    });
+
+    navigator.clipboard.writeText(text.trim()).then(() => {
+      alert("Data registrasi kendaraan berhasil disalin ke clipboard!");
+    }).catch(err => {
+      console.error("Gagal menyalin: ", err);
+      alert("Gagal menyalin teks.");
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* ── HEADER ── */}
@@ -230,7 +263,11 @@ export default function AdminTransport() {
             Kelompokkan jemaat ke dalam mobil, atau biarkan di Bus Gereja.
           </p>
         </div>
-        <div className="flex gap-2 print:hidden">
+        <div className="flex flex-wrap gap-2 print:hidden">
+          <button onClick={copyToClipboard}
+            className="inline-flex items-center gap-1.5 bg-slate-100 border border-slate-300 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm">
+            <Copy className="h-4 w-4" /> Salin Data
+          </button>
           <button onClick={() => window.print()}
             className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm">
             <Printer className="h-4 w-4" /> Export PDF
